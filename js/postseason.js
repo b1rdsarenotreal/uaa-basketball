@@ -20,10 +20,10 @@
 // supers and mcws. The format is locked into the season when the field is
 // announced.
 
-import { blankGame, DAY_ORDER } from './schedule.js?v=20261102164659';
-import { records, rpi, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261102164659';
-import { generatePoll } from './polls.js?v=20261102164659';
-import { hashStr } from './util.js?v=20261102164659';
+import { blankGame, DAY_ORDER } from './schedule.js?v=20261102221159';
+import { records, rpi, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261102221159';
+import { generatePoll } from './polls.js?v=20261102221159';
+import { hashStr } from './util.js?v=20261102221159';
 
 // ---------- tournament format ----------
 
@@ -57,9 +57,10 @@ export function ncaaConfig(season) {
   return { ...DEFAULT_NCAA, ...(season.post?.cfg || season.settings?.ncaa || {}) };
 }
 
-// The national seed shown for a team: only the regional hosts (the top
-// national seeds, one per regional) carry a national seed on screen. Inside a
-// regional every team shows its regional seed instead (regionalSeed).
+// The national seed shown for a team: only the top national seeds carry one
+// on screen — the top two in each region (1–8 with four regions), which set
+// the Final Four bracket. Inside a region every team shows its region seed
+// instead (regionalSeed).
 export function regionalSeed(season, team) {
   const ev = season.post?.regionals?.find(e => e.seeds.includes(team));
   return ev ? ev.seeds.indexOf(team) + 1 : null;
@@ -67,7 +68,7 @@ export function regionalSeed(season, team) {
 export function shownSeed(season, team) {
   const p = season.post;
   const f = p?.field?.find(x => x.team === team), cfg = ncaaConfig(season);
-  return f && f.seed <= (noRegionals(cfg) ? cfg.wsSize : cfg.regionals) ? f.seed : null;
+  return f && f.seed <= (noRegionals(cfg) ? cfg.wsSize : cfg.regionals * Math.min(2, cfg.perRegional)) ? f.seed : null;
 }
 
 // Problems with a format, in plain words (empty when it works).
@@ -126,6 +127,14 @@ function bracketOrder(p) {
   let order = [1, 2];
   while (order.length < p) { const n = order.length * 2; order = order.flatMap(s => [s, n + 1 - s]); }
   return order;
+}
+// First-round matchups for n seeds, in bracket order: [[1, 8], [4, 5],
+// [2, 7], [3, 6]] for 8 (seeds 1-based; null = a bye).
+export function firstRoundPairs(n) {
+  const order = bracketOrder(2 ** Math.ceil(Math.log2(Math.max(2, n))));
+  const out = [];
+  for (let i = 0; i < order.length; i += 2) out.push([order[i], order[i + 1] <= n ? order[i + 1] : null]);
+  return out;
 }
 
 // Days for a tournament week: the deepest round lands on Sunday.

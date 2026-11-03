@@ -4,7 +4,7 @@ import { ALIGNMENT, newLeague, currentSeason, simGames, startNextSeason, beginOf
 import { simulateGame, winProbability, simulatedWinRate, matchOdds, ovr } from '../js/sim.js';
 import { confRounds, confSeriesCounts, confTarget, DEFAULT_REG_WEEKS, DEFAULT_MAX_MATCHES, DEFAULT_CONF_MATCHES, dateOf, seriesDays, CONF_START_WEEK } from '../js/schedule.js';
 import { isFinal, isTie, winnerOf, resultFor } from '../js/standings.js';
-import { gameVenue, postseasonFinish, postseasonRecord, wsTeams, ncaaProblems, fieldSize, DEFAULT_NCAA, postWeeks, aqConferences, autoBids } from '../js/postseason.js';
+import { firstRoundPairs, shownSeed, gameVenue, postseasonFinish, postseasonRecord, wsTeams, ncaaProblems, fieldSize, DEFAULT_NCAA, postWeeks, aqConferences, autoBids } from '../js/postseason.js';
 import { recordBook } from '../js/records.js';
 import { readAauLogos, applyAauLogos } from '../js/logo-import.js';
 import { seedTeams, splitOvr, COACHES, MEN_COACHES, CONFERENCES, SIDES } from '../js/data.js';
@@ -193,6 +193,11 @@ for (const side of ['women', 'men']) {
       assert.ok(later.every(g => g.neutral && g.week === W.regional2 && gameVenue(s, g).stadium === ev.venue.stadium), 'Sweet 16 and Elite Eight at the regional site');
       assert.match(ev.name, / Region$/);
     }
+    // The top two seeds in each region are national seeds 1–8 (1 with 8, 2 with 7…).
+    const nat = t => s.post.field.find(f => f.team === t).seed;
+    assert.deepEqual(s.post.regionals.map(ev => [nat(ev.seeds[0]), nat(ev.seeds[1])]), [[1, 8], [2, 7], [3, 6], [4, 5]]);
+    assert.deepEqual(firstRoundPairs(8), [[1, 8], [4, 5], [2, 7], [3, 6]]);
+    assert.ok(shownSeed(s, s.post.regionals[0].seeds[1]) === 8 && shownSeed(s, s.post.regionals[0].seeds[2]) == null, 'national seeds 1–8 are shown');
     const ff = s.games.filter(g => g.type === 'mcws');
     assert.equal(ff.length, 3);
     assert.ok(ff.every(g => g.neutral && gameVenue(s, g).stadium === s.settings.mcwsVenue));

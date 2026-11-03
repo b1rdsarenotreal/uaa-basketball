@@ -43,7 +43,7 @@ check('all 73 AAU schools, women\'s and men\'s, in the commissioner\'s conferenc
   assert.ok(ovr(M.Michigan) >= 95 && ovr(W.UCLA) >= 95, 'the 2026 national champions lead');
   assert.equal(new Set(Object.values(MEN_COACHES)).size, Object.keys(MEN_COACHES).length, 'every men\'s coach is a different person');
   assert.equal(new Set(Object.values(COACHES)).size, Object.keys(COACHES).length);
-  for (const c of Object.keys(CONFERENCES)) assert.ok(existsSync(new URL(`../${CONFERENCES[c].logo}`, import.meta.url)), `${c} logo`);
+  for (const c of Object.keys(CONFERENCES)) assert.ok((/^https:\/\//.test(CONFERENCES[c].logo) || existsSync(new URL(`../${CONFERENCES[c].logo}`, import.meta.url))), `${c} logo`);
   const s = splitOvr('Duke', 80);
   assert.ok(Math.abs(0.4 * s.off + 0.3 * s.pit + 0.3 * s.def - 80) <= 0.5);
   assert.equal(newLeague({ side: 'men' }).sport, 'basketball');

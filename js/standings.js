@@ -1,6 +1,6 @@
 // Records, conference standings with tiebreakers, and the RPI.
 
-import { pct, hashStr } from './util.js?v=20261103124624';
+import { pct, hashStr } from './util.js?v=20261103130525';
 
 export const isFinal = g => g.final && g.homeR != null && g.awayR != null;
 // Basketball has no ties: a game tied after regulation goes to overtime

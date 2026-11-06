@@ -1,14 +1,14 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261105175349';
-import { isFinal, winnerOf, resultFor, records, rpi, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261105175349';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261105175349';
-import { ovr } from './sim.js?v=20261105175349';
-import { simGames, addGame, weekName } from './league.js?v=20261105175349';
-import { CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261105175349';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261105175349';
-import { fmtPct, hashStr } from './util.js?v=20261105175349';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261105175349';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261105210913';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261105210913';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261105210913';
+import { ovr } from './sim.js?v=20261105210913';
+import { simGames, addGame, weekName } from './league.js?v=20261105210913';
+import { CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261105210913';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261105210913';
+import { fmtPct, hashStr } from './util.js?v=20261105210913';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261105210913';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -62,7 +62,7 @@ export function renderHome() {
     <div class="grid" style="margin-top:16px">
       <div class="card"><h2>${poll ? (poll.week === 'final' ? 'Final poll' : poll.week === 0 ? 'Preseason poll' : `Week ${poll.week} poll`) : 'Poll'}</h2>
         <table><tbody>${(poll?.ranks || []).slice(0, 10).map((x, i) => `<tr><td class="num" style="width:28px">${i + 1}</td><td>${team(x.team, { rank: false })}</td><td class="num muted">${esc(x.record)}</td></tr>`).join('')}</tbody></table>
-        <p class="small"><a href="#/rankings">Full Top 15 and RPI →</a></p></div>
+        <p class="small"><a href="#/rankings">Full Top 15 and ${indexName(s)} →</a></p></div>
       <div class="card"><h2>Conference leaders</h2>
         <table><tbody>${leaders.map(({ c, top }) => `<tr><td style="width:30px"><a href="${confHref(c)}">${confLogo(c, 22)}</a></td><td>${top ? team(top.team) : '—'}</td><td class="num muted">${top ? `${top.cw}-${top.cl}` : ''}</td></tr>`).join('')}</tbody></table>
         <p class="small"><a href="#/standings">Standings →</a></p></div>
@@ -107,7 +107,7 @@ function tourneyStandings(s, weekGames) {
   });
   return `<details class="card tstand"${ui.tstandOpen ? ' open' : ''}><summary><b>Tournament standings</b> <span class="muted small">${ids.length} event${ids.length === 1 ? '' : 's'} this week</span></summary>
     <div class="tst-grid">${tables.join('')}</div>
-    <p class="small muted" style="margin:10px 0 0">Ordered by record. Ties: head-to-head when two teams are tied, then set differential, then fewest sets lost. Invitational games count in the standings, RPI and polls like any non-conference game.</p></details>`;
+    <p class="small muted" style="margin:10px 0 0">Ordered by record. Ties: head-to-head when two teams are tied, then set differential, then fewest sets lost. Invitational games count in the standings, ${indexName(S())} and polls like any non-conference game.</p></details>`;
 }
 
 // One finished game as a compact scoreboard row: logos, abbreviations,
@@ -217,14 +217,14 @@ export function renderSchedule() {
 // ---------- Standings ----------
 
 export function renderStandings() {
-  const s = S(), recs = cache.recs(), r = rpi(s);
+  const s = S(), recs = cache.recs(), r = rating(s);
   const regRecs = records(s, g => g.type === 'regular');
   const confs = Object.keys(ctx.league.conferences).filter(c => !isIndependent(c) && Object.values(s.teams).some(t => t.conference === c));
   // Independents: no conference record, so they're listed by overall record.
   const indep = Object.values(s.teams).filter(t => isIndependent(t.conference)).map(t => t.school)
     .sort((a, b) => ((recs[b].w + (recs[b].t || 0) / 2) / Math.max(1, recs[b].w + recs[b].l + (recs[b].t || 0))) - ((recs[a].w + (recs[a].t || 0) / 2) / Math.max(1, recs[a].w + recs[a].l + (recs[a].t || 0))) || (r[a]?.rank ?? 999) - (r[b]?.rank ?? 999));
   const indepCard = indep.length ? `<div class="card"><div class="row" style="margin-bottom:8px"><a href="${confHref(INDEPENDENT)}">${confLogo(INDEPENDENT, 30)}</a><h2 style="margin:0"><a class="team-link" href="${confHref(INDEPENDENT)}">Independents</a></h2><span class="spacer"></span><span class="muted small">No conference: at-large bids only</span></div>
-      <div class="table-wrap"><table><thead><tr><th></th><th>Team</th><th class="num">Overall</th><th class="num">RPI</th><th class="num">Home</th><th class="num">Away</th><th class="num">Strk</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th></th><th>Team</th><th class="num">Overall</th><th class="num">${indexName(s)}</th><th class="num">Home</th><th class="num">Away</th><th class="num">Strk</th></tr></thead>
         <tbody>${indep.map((t, i) => `<tr><td class="num muted">${i + 1}</td><td>${team(t)}</td><td class="num"><b>${recs[t].w}-${recs[t].l}</b></td><td class="num">${r[t]?.rank ?? '—'}</td><td class="num">${recs[t].hw}-${recs[t].hl}</td><td class="num">${recs[t].aw}-${recs[t].al}</td><td class="num">${recs[t].streak || ''}</td></tr>`).join('')}</tbody></table></div></div>` : '';
   const card = c => {
     const st = confStandings(s, c, regRecs, r);
@@ -286,7 +286,7 @@ function pollWeeks(s) {
 
 export function renderRankings() {
   const s = S();
-  const tabs = { poll: `Top ${pollSizeOf(s)} poll`, rpi: 'RPI', sos: 'Strength of schedule', power: 'Power (OVR)', bracket: 'Bracketology' };
+  const tabs = { poll: `Top ${pollSizeOf(s)} poll`, rpi: indexName(s), sos: 'Strength of schedule', power: 'Power (OVR)', bracket: 'Bracketology' };
   app.innerHTML = `
     <div class="section-head"><h1>${seasonLabel(s.year)} Rankings</h1></div>
     <div class="steps">${Object.entries(tabs).map(([k, l]) => `<a href="#/rankings" data-tab="${k}" class="${ui.rankTab === k ? 'active' : ''}">${l}</a>`).join('')}</div>
@@ -481,14 +481,14 @@ function renderBracketology(root) {
     root.innerHTML = `<div class="empty">Bracketology comes out once Week ${W} is finished${doneThrough ? ` (games are final through Week ${doneThrough})` : ''}. It projects the National Tournament field and the regionals as if the season ended that day, and updates as games are played.</div>`;
     return;
   }
-  const B = bracketology(s), r = rpi(s), recs = cache.recs(), pr = cache.ranks();
+  const B = bracketology(s), r = rating(s), recs = cache.recs(), pr = cache.ranks();
   const seedOf = Object.fromEntries(B.field.map(f => [f.team, f.seed]));
   const autoSet = new Set(Object.values(B.autos).filter(Boolean));
   const asOf = s.phase === 'regular' ? `after Week ${doneThrough}` : 'today';
   const row = (t, k) => `<div class="bo-row"><span class="bo-seed">${k + 1}</span><span class="bo-team">${team(t, { rank: false, size: 16 })}</span><span>${autoSet.has(t) ? '<span class="badge real" title="Projected automatic bid">AQ</span>' : ''}</span>
-    <span class="bo-conf" title="${esc(s.teams[t].conference)}">${confLogo(s.teams[t].conference, 16)}</span><span class="bo-num">${recs[t].w}-${recs[t].l}</span><span class="bo-num muted" title="RPI rank">${r[t]?.rank ? `RPI ${r[t].rank}` : ''}</span></div>`;
+    <span class="bo-conf" title="${esc(s.teams[t].conference)}">${confLogo(s.teams[t].conference, 16)}</span><span class="bo-num">${recs[t].w}-${recs[t].l}</span><span class="bo-num muted" title="${indexName(s)} rank">${r[t]?.rank ? `${indexName(s)} ${r[t].rank}` : ''}</span></div>`;
   const regionals = noRegionals(B.cfg) ? `<div class="card bo-reg"><div class="bo-head"><h3>${esc(s.settings.mcwsName)}</h3><span class="muted small">Single elimination, seeds 1–${B.field.length}</span></div>${B.field.map(f => f.team).map(row).join('')}</div>` : B.regionals.map((teams, i) => `<div class="card bo-reg"><div class="bo-head"><h3>${esc(regionName(s, teams, i))}</h3><span class="muted small">National seeds ${seedOf[teams[0]]} and ${seedOf[teams[1]] ?? '–'}</span></div>${firstRoundPairs(teams.length).map(pair => `<div class="bo-pair">${pair.map(k => (k == null ? '<div class="bo-row bye"><span class="bo-seed"></span><span class="bo-team muted">Bye</span></div>' : row(teams[k - 1], k - 1))).join('')}</div>`).join('')}</div>`).join('');
-  const list = (title, teams, note) => `<div class="bo-list"><h3>${title}</h3>${teams.length ? `<ol>${teams.map(t => `<li>${team(t, { rank: false, size: 16 })} <span class="muted small">${recs[t].w}-${recs[t].l} · RPI ${r[t]?.rank ?? '–'}</span></li>`).join('')}</ol>` : '<p class="muted small">—</p>'}${note ? `<p class="small muted">${note}</p>` : ''}</div>`;
+  const list = (title, teams, note) => `<div class="bo-list"><h3>${title}</h3>${teams.length ? `<ol>${teams.map(t => `<li>${team(t, { rank: false, size: 16 })} <span class="muted small">${recs[t].w}-${recs[t].l} · ${indexName(s)} ${r[t]?.rank ?? '–'}</span></li>`).join('')}</ol>` : '<p class="muted small">—</p>'}${note ? `<p class="small muted">${note}</p>` : ''}</div>`;
   const autoList = Object.entries(B.autos).filter(([, t]) => t).sort((a, b) => a[0].localeCompare(b[0]));
   root.innerHTML = `<div class="hint">Projected ${asOf}: ${noRegionals(B.cfg) ? `${B.field.length} teams, seeded 1–${B.field.length}, all at the finals site.` : `${B.field.length} teams in ${B.cfg.regionals} regions, seeded 1–${B.cfg.perRegional} in each.`} Automatic bids go to each conference's current leader${s.phase === 'conf' ? ' (or tournament champion)' : ''}; at-large spots and seeds come from the committee's team-by-team comparisons (see below), and teams below .500 can't take an at-large spot. It changes as games are played.${B.fill.length ? ` <b>Too few at-large candidates are .500 or better to fill the field, so the best of the rest take the last ${B.fill.length} spot${B.fill.length > 1 ? 's' : ''}: ${B.fill.map(esc).join(', ')}.</b>` : ''}</div>
     <div class="bo-layout">
@@ -504,7 +504,8 @@ function renderBracketology(root) {
 }
 
 function renderRpiTab(root) {
-  const s = S(), r = rpi(s), recs = cache.recs(), pr = cache.ranks(), Q = quadrants(s, r);
+  if (usesNet(S())) return renderNetTab(root);
+  const s = S(), r = rating(s), recs = cache.recs(), pr = cache.ranks(), Q = quadrants(s, r);
   const qc = (t, i) => { const x = Q[t].rec[i]; return `<td class="num${x.w + x.l + (x.t || 0) ? '' : ' muted'}">${x.w}-${x.l}</td>`; };
   const teams = Object.keys(s.teams).filter(t => r[t].games).sort((a, b) => r[a].rank - r[b].rank);
   root.innerHTML = `<div class="card"><div class="table-wrap"><table>
@@ -514,8 +515,33 @@ function renderRpiTab(root) {
     <p class="small muted">RPI = 25% winning percentage + 50% opponents' winning percentage (not counting games against this team) + 25% opponents' opponents' winning percentage. RPI is the selection committee's first criterion, alongside Q1 wins and Q4 losses. ${quadText(Object.keys(s.teams).length)}</p></div>`;
 }
 
+// The NET tab (seasons with settings.index 'net').
+function renderNetTab(root) {
+  const s = S(), r = rating(s), recs = cache.recs(), pr = cache.ranks(), Q = quadrants(s, r), D = NET_DIALS;
+  const qc = (t, i) => { const x = Q[t].rec[i]; return `<td class="num${x.w + x.l ? '' : ' muted'}">${x.w}-${x.l}</td>`; };
+  const teams = Object.keys(s.teams).filter(t => r[t].games).sort((a, b) => r[a].rank - r[b].rank);
+  const sign = (x, d = 1) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(d)}`;
+  const edge = r.homeEdge;
+  root.innerHTML = `<div class="card"><div class="table-wrap"><table>
+    <thead><tr><th class="num">NET</th><th>Team</th><th>Conf</th><th class="num">Record</th><th class="num" title="Adjusted net efficiency: points scored minus allowed per 100 possessions, adjusted for the opponents and where the games were played">Adj. eff.</th><th class="num" title="Adjusted efficiency rank">Rk</th><th class="num" title="Team Value Index: wins above what a bubble team would have, for the same schedule at the same sites">TVI</th><th class="num" title="Team Value Index rank">Rk</th><th class="num" title="Strength-of-schedule rank (opponents' adjusted efficiency)">SOS</th><th class="num">Poll</th>${QHEAD}</tr></thead>
+    <tbody>${teams.map(t => `<tr><td class="num"><b>${r[t].rank}</b></td><td>${team(t, { rank: false })}</td><td>${confLogo(s.teams[t].conference, 18)}</td><td class="num">${recs[t].w}-${recs[t].l}</td>
+      <td class="num">${sign(r[t].eff)}</td><td class="num muted">${r[t].effRank}</td><td class="num">${sign(r[t].tvi, 2)}</td><td class="num muted">${r[t].tviRank}</td><td class="num muted">${r[t].sosRank ?? ''}</td><td class="num muted">${pr[t] ?? ''}</td>${[0, 1, 2, 3].map(i => qc(t, i)).join('')}</tr>`).join('') || '<tr><td colspan="14" class="muted">The NET starts once games are played.</td></tr>'}</tbody></table></div>
+    <p class="small muted">The NET has two parts, as the real one has had since 2020, counted ${Math.round(D.eff * 100)}/${Math.round(D.tvi * 100)} here (the real weights aren't published). <b>Adjusted efficiency</b>: points scored minus points allowed per 100 possessions (${D.pace} possessions a team in 40 minutes, more in overtime), adjusted for how good the opponents were and where the games were played${edge != null ? ` (home court is worth ${edge.toFixed(1)} points a game this season)` : ''}. Every margin counts in full. <b>Team Value Index</b>: results only. Each win is worth the chance that a bubble team (the team at the field's last spot by efficiency) would have lost that game at that site, and each loss costs the chance it would have won, so a road win over a top team is worth nearly a full win and a home loss to a weak team costs nearly one. The NET is the committee's first criterion, alongside Q1 wins and Q4 losses. ${quadText(Object.keys(s.teams).length)}</p></div>`;
+}
+
 function renderSosTab(root) {
-  const s = S(), r = rpi(s), recs = cache.recs(), pr = cache.ranks();
+  if (usesNet(S())) {
+    const s = S(), r = rating(s), recs = cache.recs(), pr = cache.ranks();
+    const teams = Object.keys(s.teams).filter(t => r[t].games).sort((a, b) => r[a].sosRank - r[b].sosRank);
+    const sign = x => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(1)}`;
+    root.innerHTML = `<div class="card"><div class="table-wrap"><table>
+    <thead><tr><th class="num">SOS</th><th>Team</th><th>Conf</th><th class="num">Record</th><th class="num" title="Average adjusted efficiency of the opponents">Opp. adj. eff.</th><th class="num">NET</th><th class="num">Poll</th></tr></thead>
+    <tbody>${teams.map(t => `<tr><td class="num"><b>${r[t].sosRank}</b></td><td>${team(t, { rank: false })}</td><td>${confLogo(s.teams[t].conference, 18)}</td><td class="num">${recs[t].w}-${recs[t].l}</td>
+      <td class="num"><b>${sign(r[t].sos)}</b></td><td class="num muted">${r[t].rank ?? ''}</td><td class="num muted">${pr[t] ?? ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Strength of schedule starts once games are played.</td></tr>'}</tbody></table></div>
+    <p class="small muted">Strength of schedule is the average adjusted efficiency (net points per 100 possessions) of a team's opponents, once per game. It's in the selection committee's second tier, with head-to-head, Q2 wins and overall record.</p></div>`;
+    return;
+  }
+  const s = S(), r = rating(s), recs = cache.recs(), pr = cache.ranks();
   const teams = Object.keys(s.teams).filter(t => r[t].games).sort((a, b) => r[a].sosRank - r[b].sosRank);
   root.innerHTML = `<div class="card"><div class="table-wrap"><table>
     <thead><tr><th class="num">SOS</th><th>Team</th><th>Conf</th><th class="num">Record</th><th class="num">Opponents' record</th><th class="num">Opp. win %</th><th class="num">Opp. opp. win %</th><th class="num">Rating</th><th class="num">RPI</th><th class="num">Poll</th></tr></thead>
@@ -764,15 +790,16 @@ function editSeeds(conf) {
   modal.showModal();
 }
 
-const COMMITTEE_TEXT = 'team-by-team comparisons: Tier 1 RPI, Q1 wins, Q4 losses; then Tier 2; then Tier 3';
+const IX = () => indexName(S());
+const COMMITTEE_TEXT = () => `team-by-team comparisons: Tier 1 ${IX()}, Q1 wins, Q4 losses; then Tier 2; then Tier 3`;
 // The committee's criteria, for a collapsible note on the Selection and Bracketology tabs.
 const committeeBox = (open = false) => `<details class="card small committee-box"${open ? ' open' : ''}><summary><b>How the committee compares teams</b></summary>
   <p class="muted" style="margin:8px 0 6px">Teams are compared two at a time. In each tier, every criterion goes to the better team; whoever wins more of the tier's criteria is ranked higher. A tier only matters if the one before it is even.</p>
-  <ol class="tier-list">${COMMITTEE_TIERS.map((t, i) => `<li><b>${t.name}${i === 2 ? ' (splitting hairs)' : ''}:</b> ${t.items.map(([, l]) => l).join(', ')}</li>`).join('')}</ol>
-  <p class="muted" style="margin:6px 0 0">Ranking works one matchup at a time: teams start in RPI order, and each team moves up past every team it beats in a comparison until it meets one that beats it. If A beats B, then C is compared with B; if C wins, C is compared with A. The same comparisons pick the at-large teams (across the league) and set the seeds (within the field). Win percentages only count when both teams have games in that quadrant; fewer losses is better.</p></details>`;
+  <ol class="tier-list">${COMMITTEE_TIERS.map((t, i) => `<li><b>${t.name}${i === 2 ? ' (splitting hairs)' : ''}:</b> ${t.items.map(([k, l]) => (k === 'rpi' ? IX() : l)).join(', ')}</li>`).join('')}</ol>
+  <p class="muted" style="margin:6px 0 0">Ranking works one matchup at a time: teams start in ${IX()} order, and each team moves up past every team it beats in a comparison until it meets one that beats it. If A beats B, then C is compared with B; if C wins, C is compared with A. The same comparisons pick the at-large teams (across the league) and set the seeds (within the field). Win percentages only count when both teams have games in that quadrant; fewer losses is better.</p></details>`;
 const QHEAD = ['Q1', 'Q2', 'Q3', 'Q4'].map((q, i) => `<th class="num q${i + 1}" title="Record in ${q} matches (see the note below the table)">${q}</th>`).join('');
 const quadText = n => { const C = quadCuts(n), r = (loc, k) => `${k ? C[loc][k - 1] + 1 : 1}-${C[loc][k]}`;
-  return `Quadrants follow the selection committee's team sheet: a game's quadrant depends on the opponent's RPI rank and where it was played. Q1 is home vs. RPI ${r('home', 0)}, neutral ${r('neutral', 0)}, away ${r('away', 0)}; Q2 home ${r('home', 1)}, neutral ${r('neutral', 1)}, away ${r('away', 1)}; Q3 home ${r('home', 2)}, neutral ${r('neutral', 2)}, away ${r('away', 2)}; Q4 is everything else. For the committee, Q1 and Q2 wins count most and Q3 and Q4 losses hurt most.`; };
+  return `Quadrants follow the selection committee's team sheet: a game's quadrant depends on the opponent's ${IX()} rank and where it was played. Q1 is home vs. ${IX()} ${r('home', 0)}, neutral ${r('neutral', 0)}, away ${r('away', 0)}; Q2 home ${r('home', 1)}, neutral ${r('neutral', 1)}, away ${r('away', 1)}; Q3 home ${r('home', 2)}, neutral ${r('neutral', 2)}, away ${r('away', 2)}; Q4 is everything else. For the committee, Q1 and Q2 wins count most and Q3 and Q4 losses hurt most.`; };
 
 // Drag-to-reorder for table rows. Works with a mouse, pen or finger: press
 // a row's handle (⠿), drag, and let go where the team should land. The page
@@ -825,10 +852,10 @@ function renderField(root) {
   const s = S(), p = s.post || {};
   if (!p.field) {
     const cfg = ncaaConfig(s);
-    root.innerHTML = `<div class="empty">The ${fieldSize(cfg)}-team National Tournament field is chosen once every conference tournament is finished. It has ${Object.keys(ctx.league.conferences).length ? 'one automatic bid per conference (the tournament champion, or the regular-season champion where there is no tournament)' : 'automatic bids'}, and the rest are at-large picks. The committee compares teams two at a time (Tier 1: RPI, Q1 wins, Q4 losses; Tier 2: strength of schedule, head-to-head, Q2 wins, overall W-L; Tier 3: automatic bid, regular-season title, Q3 losses, Q1 and Q2 win percentages) as a starting point; you pick the at-large teams and set the seeds.<br><br>${formatSummary(cfg)} <a href="#/settings">Change the format in Settings.</a></div>`;
+    root.innerHTML = `<div class="empty">The ${fieldSize(cfg)}-team National Tournament field is chosen once every conference tournament is finished. It has ${Object.keys(ctx.league.conferences).length ? 'one automatic bid per conference (the tournament champion, or the regular-season champion where there is no tournament)' : 'automatic bids'}, and the rest are at-large picks. The committee compares teams two at a time (Tier 1: ${IX()}, Q1 wins, Q4 losses; Tier 2: strength of schedule, head-to-head, Q2 wins, overall W-L; Tier 3: automatic bid, regular-season title, Q3 losses, Q1 and Q2 win percentages) as a starting point; you pick the at-large teams and set the seeds.<br><br>${formatSummary(cfg)} <a href="#/settings">Change the format in Settings.</a></div>`;
     return;
   }
-  const r = rpi(s), pr = cache.ranks(), recs = cache.recs(), Q = quadrants(s, r), sheet = committeeSheet(s);
+  const r = rating(s), pr = cache.ranks(), recs = cache.recs(), Q = quadrants(s, r), sheet = committeeSheet(s);
   const editable = s.phase === 'selection';
   const confirmed = !editable || !!p.fieldConfirmed;
   const cfg = ncaaConfig(s);
@@ -844,7 +871,7 @@ function renderField(root) {
   };
   const qcell = (t, i) => { const x = Q[t].rec[i]; return `<td class="num q${i + 1}${x.w + x.l + (x.t || 0) ? '' : ' muted'}">${x.w}-${x.l}</td>`; };
   const stats = t => `<td class="num">${recs[t].w}-${recs[t].l}</td><td class="num key">${r[t]?.rank ?? ''}</td>${[0, 1, 2, 3].map(i => qcell(t, i)).join('')}<td class="num">${r[t]?.sosRank ?? ''}</td><td class="num muted">${pr[t] ?? ''}</td>`;
-  const head = first => `<thead><tr>${first}<th>Team</th><th class="num">Rec</th><th class="num key" title="RPI rank">RPI</th>${QHEAD}<th class="num" title="Strength-of-schedule rank">SOS</th><th class="num" title="Poll rank (not used by the committee)">Poll</th></tr></thead>`;
+  const head = first => `<thead><tr>${first}<th>Team</th><th class="num">Rec</th><th class="num key" title="${IX()} rank">${IX()}</th>${QHEAD}<th class="num" title="Strength-of-schedule rank">SOS</th><th class="num" title="Poll rank (not used by the committee)">Poll</th></tr></thead>`;
   const teamCell = t => `<td><span class="sel-team">${confLogo(s.teams[t].conference, 16)}${team(t, { rank: false, size: 16 })}</span></td>`;
   const lastIn = new Set(p.lastIn || []), firstOut = new Set(p.firstOut || []);
   const autoRows = B.autos.map(t => `<tr><td class="num muted">${crank[t]}</td>${teamCell(t)}${stats(t)}<td class="small muted">${via(t)}</td></tr>`).join('');
@@ -858,7 +885,7 @@ function renderField(root) {
     <div class="table-wrap"><table class="sel-table">${head('<th class="num" title="Committee order">#</th>')}<tbody>${autoRows}</tbody></table></div>
     <div class="row" style="margin:16px 0 6px"><h2 style="margin:0">At-large · ${B.chosen.length} of ${B.spots}</h2><span class="spacer"></span>
       ${editable && !confirmed ? `<button class="btn primary sm" id="f-confirm" ${B.chosen.length === B.spots ? '' : 'disabled'}>Confirm the ${B.size} teams</button>` : ''}</div>
-    <div class="small muted" style="margin-bottom:6px">The ${B.spots} at-large spots plus the next 10 teams, in committee order (${COMMITTEE_TEXT}). The line marks the committee's cut. Teams with a losing record can't take an at-large spot.${editable && !confirmed ? ' Check or uncheck teams to set the field.' : ''}</div>
+    <div class="small muted" style="margin-bottom:6px">The ${B.spots} at-large spots plus the next 10 teams, in committee order (${COMMITTEE_TEXT()}). The line marks the committee's cut. Teams with a losing record can't take an at-large spot.${editable && !confirmed ? ' Check or uncheck teams to set the field.' : ''}</div>
     <div class="table-wrap"><table class="sel-table">${head('<th class="num">In</th>')}<tbody>${boardRows}</tbody></table></div>
     ${(() => { const cut = B.order.indexOf(B.board[B.board.length - 1]); const skipped = B.ineligible.filter(t => B.order.indexOf(t) < cut); return skipped.length ? `<p class="small muted" style="margin:8px 0 0"><b>Not eligible (losing record):</b> ${skipped.map(t => `${esc(t)} ${recs[t].w}-${recs[t].l}`).join(', ')}</p>` : ''; })()}
     <p class="small muted" style="margin:8px 0 0">${quadText(Object.keys(s.teams).length)}</p>
@@ -868,10 +895,10 @@ function renderField(root) {
   const edge = i => {
     if (i >= field.length - 1) return '';
     const a = field[i].team, b = field[i + 1].team, c = compareTeams(sheet, a, b);
-    const list = c.won.map(k => COMMITTEE_SHORT[k]).join(', ');
-    const full = c.won.map(k => COMMITTEE_TIERS.flatMap(x => x.items).find(([kk]) => kk === k)[1]).join(', ');
-    if (c.better !== a) return `<span class="edge-flip" title="The committee would put ${esc(b)} ahead (${c.tier ? `Tier ${c.tier}: ${esc(full)}` : 'RPI'})">▼ ${c.tier ? `T${c.tier}` : 'RPI'} favors #${field[i + 1].seed}</span>`;
-    return `<span title="${esc(a)} over ${esc(b)}: ${c.tier ? `Tier ${c.tier}, ${esc(full)}` : 'every tier even, higher RPI'}">${c.tier ? `T${c.tier} · ${esc(list)}` : 'RPI'}</span>`;
+    const list = c.won.map(k => (k === 'rpi' ? IX() : COMMITTEE_SHORT[k])).join(', ');
+    const full = c.won.map(k => (k === 'rpi' ? IX() : COMMITTEE_TIERS.flatMap(x => x.items).find(([kk]) => kk === k)[1])).join(', ');
+    if (c.better !== a) return `<span class="edge-flip" title="The committee would put ${esc(b)} ahead (${c.tier ? `Tier ${c.tier}: ${esc(full)}` : IX()})">▼ ${c.tier ? `T${c.tier}` : IX()} favors #${field[i + 1].seed}</span>`;
+    return `<span title="${esc(a)} over ${esc(b)}: ${c.tier ? `Tier ${c.tier}, ${esc(full)}` : `every tier even, higher ${IX()}`}">${c.tier ? `T${c.tier} · ${esc(list)}` : IX()}</span>`;
   };
   const seedRows = field.map((f, i) => { const t = f.team, x = Q[t].rec; return `<tr class="seed-row${i < cfg.regionals ? ' host' : ''}${i === cfg.regionals - 1 ? ' host-cut' : ''}" data-seed-i="${i}">
     ${editable ? `<td class="drag-cell"><span class="drag-handle" tabindex="0" role="button" data-drag="${i}" aria-label="Move ${esc(t)} (seed ${f.seed}). Drag, or use the up and down arrow keys" title="Drag to move">⠿</span></td>` : ''}
@@ -879,7 +906,7 @@ function renderField(root) {
     <td class="num">${recs[t].w}-${recs[t].l}</td><td class="num key">${r[t]?.rank ?? ''}</td>${[0, 1, 2, 3].map(k => `<td class="num q${k + 1}${x[k].w + x[k].l + (x[k].t || 0) ? '' : ' muted'}">${x[k].w}-${x[k].l}</td>`).join('')}<td class="num">${r[t]?.sosRank ?? ''}</td><td class="edge">${edge(i)}</td></tr>`; }).join('');
   const seeding = `<div class="card sel-seeds"><h2 style="margin:0 0 4px">Seeds 1–${field.length}</h2>
     ${confirmed ? `<div class="small muted" style="margin-bottom:8px">${editable ? 'Drag a team by its handle (⠿) to move it; on a keyboard, focus the handle and use the arrow keys. ' : ''}${noRegionals(cfg) ? `${formatSummary(cfg).replace(/<[^>]+>/g, '').replace(/^Format: /, '')}</div>` : `The top ${cfg.regionals} national seeds host the regionals. Regionals are built serpentine (national seed 1 with seed ${cfg.regionals * 2}${cfg.perRegional > 2 ? `, ${cfg.regionals * 2 + 1}` : ''}…), and each team gets a regional seed, 1 to ${cfg.perRegional}.</div>`}
-      <div class="table-wrap"><table class="sel-table seed-table"><thead><tr>${editable ? '<th aria-label="Move"></th>' : ''}<th class="num">Seed</th><th>Team</th><th class="num">Rec</th><th class="num key" title="RPI rank">RPI</th>${QHEAD}<th class="num" title="Strength-of-schedule rank">SOS</th><th title="Why this team is ahead of the next seed: the deciding tier and the criteria it won there">Over next</th></tr></thead><tbody class="seed-list">${seedRows}</tbody></table></div>
+      <div class="table-wrap"><table class="sel-table seed-table"><thead><tr>${editable ? '<th aria-label="Move"></th>' : ''}<th class="num">Seed</th><th>Team</th><th class="num">Rec</th><th class="num key" title="${IX()} rank">${IX()}</th>${QHEAD}<th class="num" title="Strength-of-schedule rank">SOS</th><th title="Why this team is ahead of the next seed: the deciding tier and the criteria it won there">Over next</th></tr></thead><tbody class="seed-list">${seedRows}</tbody></table></div>
       ${editable ? '<div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" id="f-lock">Announce the field</button><button class="btn" id="f-unconfirm">Change teams</button></div>' : ''}`
       : `<p class="muted small">Pick the at-large teams and confirm them, then set the seeds here.</p>`}
   </div>`;
@@ -942,13 +969,13 @@ function regionalPreview(s, field, podList, r) {
       ${firstRoundPairs(teams.length).map(pair => `<div class="reg-prev-pair">${pair.map(k => { if (k == null) return '<div class="reg-prev-row bye"><span class="reg-prev-seed"></span><span class="reg-prev-team muted">Bye</span></div>'; const t = teams[k - 1], c = s.teams[t].conference, dup = confs[c].length > 1; return `<div class="reg-prev-row${dup ? ' dup' : ''}">
         <span class="reg-prev-seed">${k}</span><span class="reg-prev-team">${team(t, { rank: false, size: 16 })}</span>
         <span class="reg-prev-conf" title="${esc(c)}">${confLogo(c, 18)}${confInfo(c).logo ? `<span>${esc(confInfo(c).abbr || c)}</span>` : ''}</span>
-        <span class="reg-prev-num" title="National seed · RPI rank">#${seedOf(t)} · ${r[t]?.rank ?? '–'}</span></div>`; }).join('')}</div>`).join('')}
+        <span class="reg-prev-num" title="National seed · ${IX()} rank">#${seedOf(t)} · ${r[t]?.rank ?? '–'}</span></div>`; }).join('')}</div>`).join('')}
       ${dupes.length ? `<div class="reg-prev-warn">⚠ Same conference: ${dupes.map(([c, l]) => `${esc(c)} (${l.length})`).join(', ')}</div>` : ''}
     </div>`;
   }).join('');
   const clashes = podList.filter(teams => new Set(teams.map(t => s.teams[t].conference)).size < teams.length).length;
   return `<aside class="card reg-preview"><h2 style="margin:0 0 4px">Region preview</h2>
-    <div class="small muted" style="margin-bottom:10px">First-round matchups: region seed, then national seed · RPI rank. The top two seeds in each region are national seeds 1–${podList.length * 2}. ${clashes ? `<b class="warn-text">${clashes} region${clashes > 1 ? 's have' : ' has'} conference rivals together.</b>` : 'No conference rivals share a regional.'} Strongest to weakest regional: ${spread.toFixed(1)} OVR.</div>
+    <div class="small muted" style="margin-bottom:10px">First-round matchups: region seed, then national seed · ${IX()} rank. The top two seeds in each region are national seeds 1–${podList.length * 2}. ${clashes ? `<b class="warn-text">${clashes} region${clashes > 1 ? 's have' : ' has'} conference rivals together.</b>` : 'No conference rivals share a regional.'} Strongest to weakest regional: ${spread.toFixed(1)} OVR.</div>
     <div class="reg-prev-list">${boxes}</div></aside>`;
 }
 

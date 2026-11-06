@@ -265,3 +265,26 @@ check('a saved league loads again', () => {
 });
 
 console.log(`${n} checks ok in ${Date.now() - t0} ms`);
+
+// ---- NET ----
+{
+  const { net, rating, records } = await import('../js/standings.js');
+  for (const side of ['men', 'women']) {
+    const lg = newLeague({ side }), s = currentSeason(lg);
+    assert.equal(s.settings.index, 'net', 'new leagues use the NET');
+    simGames(s, g => g.type === 'regular', { max: 9000 });
+    const n = net(s), r = rating(s), recs = records(s);
+    const teams = Object.keys(s.teams);
+    assert.ok(Math.abs(teams.reduce((a, t) => a + n[t].eff, 0)) < 1e-6, 'efficiency is centered on 0');
+    for (const t of teams) assert.equal(r[t].rank, n[t].rank, 'rating() is the NET');
+    // Better teams (by rating) should mostly rank higher.
+    const ovrOf = t => s.teams[t].off * 0.4 + s.teams[t].pit * 0.3 + s.teams[t].def * 0.3;
+    const top = [...teams].sort((a, b) => n[a].rank - n[b].rank).slice(0, 10);
+    const avgTop = top.reduce((a, t) => a + ovrOf(t), 0) / 10, avgAll = teams.reduce((a, t) => a + ovrOf(t), 0) / teams.length;
+    assert.ok(avgTop > avgAll + 5, `the NET's top 10 are good teams (${avgTop.toFixed(1)} vs ${avgAll.toFixed(1)})`);
+    const old = JSON.parse(JSON.stringify(lg)); delete old.indexVersion; delete currentSeason(old).settings.index;
+    migrateLeague(old);
+    assert.equal(currentSeason(old).settings.index, 'net');
+  }
+  console.log('NET ok');
+}

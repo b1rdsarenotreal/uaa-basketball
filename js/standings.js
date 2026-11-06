@@ -1,6 +1,6 @@
-// Records, conference standings with tiebreakers, and the RPI.
+// Records, conference standings with tiebreakers, the RPI and the NET.
 
-import { pct, hashStr } from './util.js?v=20261105175349';
+import { pct, hashStr } from './util.js?v=20261105210913';
 
 export const isFinal = g => g.final && g.homeR != null && g.awayR != null;
 // Basketball has no ties: a game tied after regulation goes to overtime
@@ -47,6 +47,105 @@ export function records(season, filter = null) {
       r.streak = `${last}${n}`;
     }
   }
+  return out;
+}
+
+// The ranking the committee sorts by: the NET by default, the RPI in older
+// seasons (settings.index). Both come back in the same shape, the ranking
+// value in `rpi` (the shared code's name for it), with `rank` and `sosRank`.
+export const usesNet = season => season?.settings?.index === 'net';
+export const indexName = season => (usesNet(season) ? 'NET' : 'RPI');
+export function rating(season, filter = null) {
+  return usesNet(season) ? net(season, filter) : rpi(season, filter);
+}
+
+// The NET (NCAA Evaluation Tool), as the NCAA has described it since 2020:
+// two parts, the Team Value Index (results: who you beat, where) and adjusted
+// net efficiency (points scored minus allowed per 100 possessions, adjusted
+// for the opponents and where the games were played). The NCAA doesn't
+// publish the formula or the weights, so these dials are ours:
+// - eff / tvi: how much each part counts in the NET (half each);
+// - pace: possessions a team has in 40 minutes (the sim's), +5 minutes' worth
+//   per overtime, used to turn a score into points per 100 possessions;
+// - prior: a team's efficiency starts as if it had played this many games
+//   against an average team, so a few early blowouts don't run away with it;
+// - sigma: how many points one game can swing either way, for the TVI.
+// The TVI is wins above bubble per game: each win is worth the chance a
+// bubble team (the one at the field's last spot in efficiency) would have
+// lost that game, at that site; each loss costs the chance it would have won.
+export const NET_DIALS = { eff: 0.5, tvi: 0.5, pace: 68, prior: 2, sigma: 11 };
+
+function normCdf(x) {
+  // Abramowitz and Stegun 7.1.26
+  const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x / 2);
+  return x >= 0 ? (1 + y) / 2 : (1 - y) / 2;
+}
+
+export function net(season, filter = null, dials = { ...NET_DIALS, ...(season.settings?.net || {}) }) {
+  const D = dials;
+  const periods = season.settings?.periods === 2 ? 2 : 4;
+  const teams = Object.keys(season.teams), n = teams.length;
+  const games = season.games.filter(g => isFinal(g) && !isTie(g) && (!filter || filter(g)) && season.teams[g.home] && season.teams[g.away]);
+  // Each game from the home team's side: margin per 100 possessions and
+  // where it was played (+1 home, 0 neutral, -1 away).
+  const rows = games.map(g => {
+    const ot = Math.max(0, (g.homeLine?.length || periods) - periods);
+    const poss = D.pace * (40 + 5 * ot) / 40;
+    const loc = gameLocation(g, g.home);
+    return { g, h: g.home, a: g.away, m: (g.homeR - g.awayR) / poss * 100, loc: loc === 'home' ? 1 : loc === 'away' ? -1 : 0 };
+  });
+  const by = Object.fromEntries(teams.map(t => [t, []]));
+  for (const r of rows) { by[r.h].push({ o: r.a, m: r.m, loc: r.loc, won: r.m > 0, g: r.g }); by[r.a].push({ o: r.h, m: -r.m, loc: -r.loc, won: r.m < 0, g: r.g }); }
+  // Adjusted net efficiency: margin = a_team - a_opp + home edge, solved by
+  // passes until it settles; the home edge comes from the games themselves.
+  let a = Object.fromEntries(teams.map(t => [t, 0])), hca = 0;
+  for (let it = 0; it < 300; it++) {
+    let diff = 0;
+    for (const t of teams) {
+      const gs = by[t];
+      const v = gs.reduce((s, x) => s + x.m - x.loc * hca + a[x.o], 0) / (gs.length + D.prior);
+      diff = Math.max(diff, Math.abs(v - a[t])); a[t] = v;
+    }
+    const sited = rows.filter(r => r.loc);
+    hca = sited.length ? sited.reduce((s, r) => s + r.loc * (r.m - (a[r.h] - a[r.a])), 0) / sited.length : 0;
+    if (diff < 1e-5) break;
+  }
+  const mean = teams.reduce((s, t) => s + a[t], 0) / (n || 1);
+  for (const t of teams) a[t] -= mean;
+  // The bubble team: the field's last spot in efficiency.
+  const cfg = season.settings?.ncaa || {};
+  const size = cfg.regionals ? cfg.regionals * cfg.perRegional : cfg.wsSize || 32;
+  const effOrder = [...teams].sort((x, y) => a[y] - a[x]);
+  const bubble = a[effOrder[Math.min(n - 1, Math.max(0, size - 1))]] ?? 0;
+  const out = {};
+  for (const t of teams) {
+    const gs = by[t];
+    let tvi = 0;
+    for (const x of gs) {
+      // The bubble team's expected margin in this game, in points.
+      const pts = (bubble - a[x.o] + x.loc * hca) * D.pace / 100;
+      const pWin = normCdf(pts / D.sigma);
+      tvi += x.won ? 1 - pWin : -pWin;
+    }
+    out[t] = {
+      eff: a[t], tvi, tviPer: gs.length ? tvi / gs.length : 0,
+      sos: gs.length ? gs.reduce((s, x) => s + a[x.o], 0) / gs.length : 0,
+      games: gs.length, w: gs.filter(x => x.won).length, l: gs.filter(x => !x.won).length,
+    };
+  }
+  // The NET: both parts as z-scores, weighted by the dials.
+  const played = teams.filter(t => out[t].games);
+  const z = k => {
+    const v = played.map(t => out[t][k]), m = v.reduce((s, x) => s + x, 0) / (v.length || 1);
+    const sd = Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / (v.length || 1)) || 1;
+    return t => (out[t][k] - m) / sd;
+  };
+  const ze = z('eff'), zt = z('tvi');
+  for (const t of teams) out[t].rpi = out[t].games ? D.eff * ze(t) + D.tvi * zt(t) : -99;
+  const rankBy = (k, field) => played.sort((x, y) => out[y][k] - out[x][k]).forEach((t, i) => { out[t][field] = i + 1; });
+  rankBy('eff', 'effRank'); rankBy('tvi', 'tviRank'); rankBy('sos', 'sosRank'); rankBy('rpi', 'rank');
+  Object.defineProperty(out, 'homeEdge', { value: hca * D.pace / 100 }); // points a game
   return out;
 }
 
@@ -122,7 +221,7 @@ export function quadOf(rank, loc, teamCount = 300) {
   const i = cuts.findIndex(c => rank <= c);
   return i < 0 ? 4 : i + 1;
 }
-export function quadrants(season, r = rpi(season), filter = null) {
+export function quadrants(season, r = rating(season), filter = null) {
   const teams = Object.keys(season.teams), n = teams.length;
   const out = {};
   for (const t of teams) out[t] = { q: quadOf(r[t]?.rank, 'home', n), rec: [0, 1, 2, 3].map(() => ({ w: 0, l: 0, t: 0 })) };
@@ -172,7 +271,7 @@ export const TIEBREAKERS = [
   'Conference points (3 for a win, 1 for a tie)',
   'Head-to-head points among all the tied teams (teams still tied start over with head-to-head among just them)',
   'Points against common conference opponents, starting with the highest-placed opponent and working down',
-  'RPI',
+  'NET (the RPI in seasons before the switch)',
   'Coin flip',
 ];
 
@@ -206,7 +305,7 @@ function breakTie(season, conf, group, others, r, why) {
     if (split) return recurse(split, { step: 'common', text: `Record vs ${common.join(', ')}` });
   }
   const byRpi = tiers(group, t => r[t]?.rpi ?? 0);
-  if (byRpi) return recurse(byRpi, { step: 'rpi', text: 'RPI' });
+  if (byRpi) return recurse(byRpi, { step: 'rpi', text: indexName(season) });
   // Coin flip: fixed for the season, so the order doesn't change on reload.
   const flip = t => hashStr(`${season.year}|${conf}|${[...group].sort().join('|')}|${t}`);
   for (const t of group) why[t] = { step: 'coin', text: 'Coin flip' };
@@ -217,7 +316,7 @@ function breakTie(season, conf, group, others, r, why) {
 // behind the leader (`gb`). Each row's `tb` says which tiebreaker placed it,
 // when it was tied. Every member plays the same number of conference games,
 // so points rank fairly.
-export function confStandings(season, conf, recs = records(season), r = rpi(season)) {
+export function confStandings(season, conf, recs = records(season), r = rating(season)) {
   const teams = Object.values(season.teams).filter(t => t.conference === conf).map(t => t.school);
   const cp = t => confPts(recs[t]);
   const groups = [];
@@ -254,7 +353,7 @@ export function regularSeasonDone(season) {
 
 // Regular-season champions: every team tied for the most conference points
 // shares the title (a commissioner override names one champion).
-export function regSeasonChamps(season, conf, recs = records(season, g => g.type === 'regular'), r = rpi(season, g => g.type === 'regular')) {
+export function regSeasonChamps(season, conf, recs = records(season, g => g.type === 'regular'), r = rating(season, g => g.type === 'regular')) {
   if (isIndependent(conf)) return [];
   if (season.overrides?.regChamps?.[conf]) return [season.overrides.regChamps[conf]];
   const st = confStandings(season, conf, recs, r);

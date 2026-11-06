@@ -42,6 +42,14 @@ owner asks.
   Saturday/Monday, women's Friday/Sunday. Conference tournaments take every
   team, single elimination on back-to-back days. User-facing text never says
   NCAA or MCWS.
+- The team-sheet ranking is the NET (`net` in `js/standings.js`, dials in
+  `NET_DIALS`: adjusted net efficiency and a Team Value Index, half each;
+  the NCAA doesn't publish its weights) when `settings.index` is 'net' (the
+  default; `indexVersion` 1 switched older saves from the current or next
+  season on). It replaces the RPI in Tier 1 of the committee, the quadrants
+  and the tiebreakers. `rating(season)` gives the season's ranking in the
+  RPI's shape (value in `rpi`, plus `rank`, `sosRank`); use it, not `rpi()`,
+  and `indexName(season)` for on-screen labels.
 - On-screen text says "game".
 - Women's and men's: `league.side` is 'women' or 'men', each with its own
   save key (`js/store.js`), team rows and coaches (`js/data.js`, edited

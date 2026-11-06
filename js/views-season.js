@@ -1,14 +1,14 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261105210913';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261105210913';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261105210913';
-import { ovr } from './sim.js?v=20261105210913';
-import { simGames, addGame, weekName } from './league.js?v=20261105210913';
-import { CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261105210913';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261105210913';
-import { fmtPct, hashStr } from './util.js?v=20261105210913';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261105210913';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261105225849';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261105225849';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261105225849';
+import { ovr } from './sim.js?v=20261105225849';
+import { simGames, addGame, weekName } from './league.js?v=20261105225849';
+import { CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261105225849';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261105225849';
+import { fmtPct, hashStr } from './util.js?v=20261105225849';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261105225849';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -576,8 +576,10 @@ function eventBracket(ev, seedFn, { stack = false, colw = BK.COLW } = {}) {
   const secOf = n => n.sec || 'W';
   const kids = n => [n.a, n.b].filter(r => r && r.w && byKey[r.w] && secOf(byKey[r.w]) === secOf(n)).map(r => byKey[r.w]);
   const pos = {};
-  // Elimination-bracket "games" against a bye never happen; leave them out.
-  const hidden = new Set(ev.nodes.filter(n => secOf(n) === 'L' && nodeTeams(ev, n).includes('BYE')).map(n => n.key));
+  // "Games" against a bye never happen; leave them out (the owner's rule,
+  // Nov. 2026): a team with a bye starts in the next round, next to an
+  // empty slot.
+  const hidden = new Set(ev.nodes.filter(n => nodeTeams(ev, n).includes('BYE')).map(n => n.key));
   const sections = ['W', 'L'].filter(sec => ev.nodes.some(n => secOf(n) === sec));
   const double = sections.includes('L');
   let top = 0, maxCol = 0;

@@ -926,3 +926,9 @@ button.bx-sg:hover { border-color: var(--muted); }
 
 /* First-round matchups between conference rivals (bracketology, region preview). */
 .bo-pair.clash, .reg-prev-pair.clash { box-shadow: inset 3px 0 0 var(--warn, #c27c0e); }
+
+/* Selection: seed lines (all 1 seeds, all 2 seeds…) */
+.seed-table tr.seed-line td { background: color-mix(in srgb, var(--accent, #1d4ed8) 7%, transparent); border-top: 2px solid var(--line); padding: 6px 8px; font-size: 13px; }
+.seed-table tr.seed-line:first-child td { border-top: 0; }
+.seed-table td.seed-reg { white-space: nowrap; font-size: 12.5px; }
+.seed-table td.seed-reg img { vertical-align: middle; }

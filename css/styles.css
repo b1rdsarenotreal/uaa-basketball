@@ -923,3 +923,6 @@ button.bx-sg:hover { border-color: var(--muted); }
 .bg-n.bg-r { white-space: nowrap; }
 .bk .bg-row { grid-template-columns: minmax(0, 1fr) minmax(30px, auto); }
 .side-switch[hidden] { display: none; }
+
+/* First-round matchups between conference rivals (bracketology, region preview). */
+.bo-pair.clash, .reg-prev-pair.clash { box-shadow: inset 3px 0 0 var(--warn, #c27c0e); }

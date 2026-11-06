@@ -57,6 +57,13 @@ owner asks.
   shared; put differences in data or settings.
 - Ratings come from the real 2025-26 season with the formula in `js/data.js`;
   coaches are the real 2026 head coaches. Say where data came from there.
+- Regionals avoid first-round matchups between conference rivals
+  (`avoidConferenceMatchups` in `js/postseason.js`, the owner's rule): after
+  the serpentine, teams on one seed line trade regionals (lowest lines
+  first), then, as a last resort, a team moves one seed line; the top line
+  never moves. `pods(field, n, season)` applies it, so bracketology, the
+  selection preview and the announced field agree. Bracketology and the
+  preview show each regional's first-round matchups.
 
 ## Before every commit
 

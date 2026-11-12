@@ -10,6 +10,8 @@
 
 export const AAU_LOGO_SET = 'aau-dynasty-2026-11';
 export const DEFAULT_LOGOS = {
+  // The bobcat with a gold UCM, made for the owner (Nov. 2026); hosted with this app.
+  'UC Merced': 'https://b1rdsarenotreal.github.io/uaa-basketball/img/schools/uc-merced.svg',
   'Boston University': 'https://content.sportslogos.net/logos/30/619/full/boston_university_terriers_logo_secondary_2015_sportslogosnet-1868.png',
   Brandeis: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Brandeis_athletics_logo_2024.png/330px-Brandeis_athletics_logo_2024.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail',
   Caltech: 'https://upload.wikimedia.org/wikipedia/en/f/fb/Caltech_beavers_logo.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled',

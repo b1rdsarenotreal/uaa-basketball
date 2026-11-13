@@ -1,14 +1,14 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261112194428';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261112194428';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261112194428';
-import { ovr } from './sim.js?v=20261112194428';
-import { simGames, addGame, weekName } from './league.js?v=20261112194428';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261112194428';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261112194428';
-import { fmtPct, hashStr } from './util.js?v=20261112194428';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261112194428';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261112194853';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261112194853';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261112194853';
+import { ovr } from './sim.js?v=20261112194853';
+import { simGames, addGame, weekName } from './league.js?v=20261112194853';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261112194853';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261112194853';
+import { fmtPct, hashStr } from './util.js?v=20261112194853';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261112194853';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -289,7 +289,7 @@ export function renderStandings() {
   const pick = confs.includes(ui.standConf) || (ui.standConf === INDEPENDENT && indep.length) ? ui.standConf : 'all';
   const side = (v, label, logo, cvars = '') => `<button type="button" class="st-link ${pick === v ? 'active' : ''}" data-stc="${esc(v)}" aria-pressed="${pick === v}" style="${cvars}">${logo}<span>${label}</span></button>`;
   app.innerHTML = `
-    <div class="section-head"><h1>${seasonLabel(s.year)} Standings</h1><span class="muted">The line marks the conference tournament cut, where a conference has one.</span></div>
+    <div class="section-head"><h1>${seasonLabel(s.year)} Standings</h1><span class="muted">Ordered by conference record. The line marks the conference tournament cut, where a conference has one.</span></div>
     <div class="st-layout">
       <aside class="st-side" aria-label="Conferences"><span class="st-kick">Conferences</span>
         ${side('all', 'All conferences', '<span class="st-grid-ic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>')}

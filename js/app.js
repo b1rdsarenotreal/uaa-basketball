@@ -1,13 +1,13 @@
 // App shell: loading the dynasty, the top bar, and page routing.
 
-import { loadLeague, saveLeague, currentSide, setSide } from './store.js?v=20261112225223';
-import { setPeriods } from './sim.js?v=20261112225223';
-import { loadLogoTable } from './logos.js?v=20261112225223';
-import { newLeague, afterChange, migrateLeague } from './league.js?v=20261112225223';
-import { ctx, app, cache, persist, esc, flushSave, seasonLabel } from './ui.js?v=20261112225223';
-import { renderHome, renderSchedule, renderStandings, renderRankings, renderPostseason, resetSeasonUi } from './views-season.js?v=20261112225223';
-import { renderRecords } from './views-records.js?v=20261112225223';
-import { renderTeams, renderTeamPage, renderConferences, renderConferencePage, renderHistory, renderSettings, renderOffseason, renderCoaches, renderCoachPage } from './views-league.js?v=20261112225223';
+import { loadLeague, saveLeague, currentSide, setSide } from './store.js?v=20261112232251';
+import { setPeriods } from './sim.js?v=20261112232251';
+import { loadLogoTable } from './logos.js?v=20261112232251';
+import { newLeague, afterChange, migrateLeague } from './league.js?v=20261112232251';
+import { ctx, app, cache, persist, esc, flushSave, seasonLabel } from './ui.js?v=20261112232251';
+import { renderHome, renderSchedule, renderStandings, renderRankings, renderPostseason, resetSeasonUi } from './views-season.js?v=20261112232251';
+import { renderRecords } from './views-records.js?v=20261112232251';
+import { renderTeams, renderTeamPage, renderConferences, renderConferencePage, renderHistory, renderSettings, renderOffseason, renderCoaches, renderCoachPage } from './views-league.js?v=20261112232251';
 
 const VIEWS = { home: 'Home', schedule: 'Schedule', standings: 'Standings', rankings: 'Rankings', postseason: 'Postseason', offseason: 'Offseason', teams: 'Teams', coaches: 'Coaches', conferences: 'Conferences', history: 'History', records: 'Records', settings: 'Settings' };
 const SUBVIEWS = { team: 'teams', conference: 'conferences', coach: 'coaches' };

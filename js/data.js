@@ -52,7 +52,7 @@
 // confirmed (some Division III programs) start as open jobs; name them on
 // the Coaches page. Arenas are each school's home court.
 
-import { DEFAULT_LOGOS } from './logo-import.js?v=20261111234538';
+import { DEFAULT_LOGOS } from './logo-import.js?v=20261112194428';
 
 export const START_YEAR = 2030;
 

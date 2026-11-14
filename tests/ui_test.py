@@ -86,7 +86,8 @@ with sync_playwright() as p:
     assert pg.locator('[data-pt="regionals"]').inner_text() == "Regions"
     pg.click('[data-pt="regionals"]'); pg.wait_for_timeout(250)
     t = pg.locator("#app").inner_text()
-    assert "Albany Region" in t and "MVP Arena" in t, t[:500]
+    # Region sites rotate by year (js/regions.js): 2030 opens in Oklahoma City.
+    assert "Oklahoma City Region" in t and "Paycom Center" in t, t[:500]
     for tab in ["regionals", "participants", "mcws"]:
         pg.click(f'[data-pt="{tab}"]'); pg.wait_for_timeout(250)
         assert "Something went wrong" not in pg.locator("#app").inner_text()

@@ -1,20 +1,21 @@
 // League pages: teams, team profiles, conferences, history, settings.
 
-import { readAauLogos, applyAauLogos, DEFAULT_LOGOS } from './logo-import.js?v=20261113234500';
-import { AAU_SCHOOLS, AAU_CONFERENCES, AAU_PROGRAMS } from './aau-schools.js?v=20261113234500';
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, flushSave, cache, team, teamInfo, logoImg, teamOptions, teamHref, confLogo, confHref, confInfo, confColor, imageFileToDataUrl, readableOn, openGame, resultText, periodNote, gameDateOf, seasonLabel, seasonSpan } from './ui.js?v=20261113234500';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, confStandings, regSeasonChamp, regSeasonChamps, isIndependent } from './standings.js?v=20261113234500';
-import { ovr } from './sim.js?v=20261113234500';
-import { latestPoll, pollRankMap, pollSizeOf, POLL_SIZES, DEFAULT_POLL_SIZE } from './polls.js?v=20261113234500';
-import { addTeam, removeTeam, renameTeam, addConference, renameConference, deleteConference, rebuildSchedule, startNextSeason, weekName, newLeague, beginOffseason, draftRemoveTeam, draftRestoreTeam, draftWarnings, coachName, coachSchool, hireCoach, newCoach, availableCoaches, backfillHitsErrors, placeRemaining, clearPoints, pointsLeft, migrateLeague, applyAlignment, canApplyAlignment, syncCoachBonus, devTotal, coachResumes, coachPrestige, prestigeLabel, coachBonus, programPrestiges, programLabel, fitLabel } from './league.js?v=20261113234500';
-import { hotSeat, HEAT } from './hotseat.js?v=20261113234500';
-import { setRating } from './ratings.js?v=20261113234500';
-import { confFormatName, aqConferences, aqMinOf, postseasonFinish, postseasonDetail, postseasonRecord, wsTeams, postWeeks, regWeeksOf, ncaaConfig, ncaaProblems, fieldSize, hasSupers, formatSummary, proposeField, DEFAULT_NCAA, mcwsVenue, allEvents, gameVenue } from './postseason.js?v=20261113234500';
-import { DEFAULT_TOURNEY_WEEKS, DEFAULT_REG_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, confTarget } from './schedule.js?v=20261113234500';
-import { exportLeague, clearLeague } from './store.js?v=20261113234500';
-import { conferencesFor, sideOf } from './data.js?v=20261113234500';
-import { clamp, fmtPct } from './util.js?v=20261113234500';
-import { recordBook, teamPollHistory, headToHead } from './records.js?v=20261113234500';
+import { readAauLogos, applyAauLogos, DEFAULT_LOGOS } from './logo-import.js?v=20261114151901';
+import { AAU_SCHOOLS, AAU_CONFERENCES, AAU_PROGRAMS } from './aau-schools.js?v=20261114151901';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, flushSave, cache, team, teamInfo, logoImg, teamOptions, teamHref, confLogo, confHref, confInfo, confColor, imageFileToDataUrl, readableOn, openGame, resultText, periodNote, gameDateOf, seasonLabel, seasonSpan } from './ui.js?v=20261114151901';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, confStandings, regSeasonChamp, regSeasonChamps, isIndependent } from './standings.js?v=20261114151901';
+import { ovr } from './sim.js?v=20261114151901';
+import { latestPoll, pollRankMap, pollSizeOf, POLL_SIZES, DEFAULT_POLL_SIZE } from './polls.js?v=20261114151901';
+import { addTeam, removeTeam, renameTeam, addConference, renameConference, deleteConference, rebuildSchedule, startNextSeason, weekName, newLeague, beginOffseason, draftRemoveTeam, draftRestoreTeam, draftWarnings, coachName, coachSchool, hireCoach, newCoach, availableCoaches, backfillHitsErrors, placeRemaining, clearPoints, pointsLeft, migrateLeague, applyAlignment, canApplyAlignment, syncCoachBonus, devTotal, coachResumes, coachPrestige, prestigeLabel, coachBonus, programPrestiges, programLabel, fitLabel } from './league.js?v=20261114151901';
+import { hotSeat, HEAT } from './hotseat.js?v=20261114151901';
+import { setRating } from './ratings.js?v=20261114151901';
+import { confFormatName, aqConferences, aqMinOf, postseasonFinish, postseasonDetail, postseasonRecord, wsTeams, postWeeks, regWeeksOf, ncaaConfig, ncaaProblems, fieldSize, hasSupers, formatSummary, proposeField, DEFAULT_NCAA, mcwsVenue, allEvents, gameVenue } from './postseason.js?v=20261114151901';
+import { DEFAULT_TOURNEY_WEEKS, DEFAULT_REG_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, confTarget } from './schedule.js?v=20261114151901';
+import { exportLeague, clearLeague } from './store.js?v=20261114151901';
+import { conferencesFor, sideOf } from './data.js?v=20261114151901';
+import { clamp, fmtPct } from './util.js?v=20261114151901';
+import { recordBook, teamPollHistory, headToHead } from './records.js?v=20261114151901';
+import { regionSitesFor, regionChoices } from './regions.js?v=20261114151901';
 
 const ui = { confFilter: '', ncaaDraft: null, teamSort: { k: 'ovr', dir: -1 }, coachSort: { k: 'now', dir: -1 }, teamTab: 'season', h2hSort: { k: 'g', dir: -1 }, h2hFilter: 'all', memberSort: { k: 'titles', dir: -1 } };
 
@@ -988,6 +989,21 @@ function gamesEstimate(cs, cur) {
   return lo === hi ? `${lo}` : `${lo}–${hi}`;
 }
 
+// Settings: where the regions play (Sweet 16 and Elite Eight). Rotate draws
+// new arenas every year from the real regional sites; fixed lets the
+// commissioner pick each region's arena.
+function regionSitesHtml(s) {
+  const st = s.settings, cfg = ncaaConfig(s);
+  if (!(cfg.homeSites && cfg.campusRounds)) return '';
+  const locked = !!s.post?.regionals?.length, mode = st.regionMode || 'rotate', sites = regionSitesFor(s), choices = regionChoices(st);
+  const rows = sites.map((x, i) => mode === 'fixed' && !locked
+    ? `<label class="field" style="flex:1;min-width:220px">${esc(st.periods === 2 ? `${x.name} Region` : `Region ${i + 1}`)} <select data-rsite="${i}">${choices.map((c, k) => `<option value="${k}" ${c.stadium === x.stadium ? 'selected' : ''}>${esc(st.periods === 2 ? `${c.name}: ${c.stadium}, ${c.city}` : `${c.stadium}, ${c.city}`)}</option>`).join('')}${choices.some(c => c.stadium === x.stadium) ? '' : `<option selected>${esc(`${x.stadium}, ${x.city}`)}</option>`}</select></label>`
+    : `<div class="small"><b>${esc(x.name)} Region</b> · ${esc(x.stadium)}, ${esc(x.city)}</div>`).join('');
+  return `<label class="field">Region sites <select id="s-rmode" ${locked ? 'disabled' : ''}><option value="rotate" ${mode === 'rotate' ? 'selected' : ''}>New arenas every year</option><option value="fixed" ${mode === 'fixed' ? 'selected' : ''}>Pick each region's arena</option></select></label>
+    <div class="${mode === 'fixed' && !locked ? 'row' : 'stack'}" style="gap:6px 12px;margin-top:-4px">${rows}</div>
+    <p class="small muted" style="margin-top:-2px">${locked ? `The ${seasonLabel(s.year)} regions are set.` : `The Sweet 16 and Elite Eight in ${seasonLabel(s.year)}.`} Arenas come from the real regional sites since 2016.</p>`;
+}
+
 export function renderSettings() {
   const L = ctx.league, s = S(), st = s.settings;
   const isCurrent = L.viewYear === L.currentYear;
@@ -1007,6 +1023,7 @@ export function renderSettings() {
         <label class="field">${seasonLabel(s.year)} championship name <input type="text" id="s-mcws" value="${esc(st.mcwsName)}"></label>
         <div class="row"><label class="field" style="flex:1;min-width:160px">Final Four stadium <input type="text" id="s-venue" value="${esc(st.mcwsVenue || mcwsVenue(s).stadium)}"></label>
           <label class="field" style="flex:1;min-width:140px">City <input type="text" id="s-city" value="${esc(st.mcwsCity ?? 'Kansas City, Mo.')}"></label></div>
+        ${regionSitesHtml(s)}
         <label class="field">Poll size <select id="s-poll">${POLL_SIZES.map(n => `<option value="${n}" ${pollSizeOf(cur) === n ? 'selected' : ''}>Top ${n}</option>`).join('')}</select></label>
         <p class="small muted" style="margin-top:-6px">Polls released from now on rank this many teams. Polls already out keep their size; regenerate one on the Rankings page to resize it.</p>
         <label class="field">Ratings between seasons <select id="s-dev">${Object.entries({ none: 'Stay the same', small: 'Small changes', normal: 'Normal changes', big: 'Big changes' }).map(([k, l]) => `<option value="${k}" ${st.development === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -1078,6 +1095,19 @@ export function renderSettings() {
   $('#s-name').onchange = e => { L.name = e.target.value.trim() || L.name; changed({ progress: false }); };
   $('#s-venue').onchange = e => { st.mcwsVenue = e.target.value.trim() || mcwsVenue(s).stadium; changed({ progress: false }); };
   $('#s-city').onchange = e => { st.mcwsCity = e.target.value.trim(); changed({ progress: false }); };
+  if ($('#s-rmode')) $('#s-rmode').onchange = e => {
+    // Switching to fixed starts from this season's rotated sites.
+    if (e.target.value === 'fixed') st.regionSites = regionSitesFor(s).map(x => ({ ...x }));
+    st.regionMode = e.target.value; changed({ progress: false });
+  };
+  $$('[data-rsite]').forEach(sel => (sel.onchange = () => {
+    const i = Number(sel.dataset.rsite), c = regionChoices(st)[Number(sel.value)];
+    if (!c) return;
+    st.regionSites = regionSitesFor(s).map(x => ({ ...x }));
+    // Men's regions keep their names (East, South…); a women's region is named for its city.
+    st.regionSites[i] = { ...c, name: st.periods === 2 ? st.regionSites[i].name : c.name };
+    changed({ progress: false });
+  }));
   $('#s-mcws').onchange = e => { st.mcwsName = e.target.value.trim() || "Final Four"; changed({ progress: false }); };
   $('#s-dev').onchange = e => { st.development = e.target.value; persist(); };
   $('#s-index').onchange = e => { st.index = e.target.value; if (s.phase === 'selection') proposeField(s); changed(); toast(`${seasonLabel(s.year)} now uses the ${indexName(s)}.`); };

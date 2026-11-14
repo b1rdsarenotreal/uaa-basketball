@@ -1,15 +1,15 @@
 // League (dynasty) lifecycle: creating the league, saving results,
 // simulating, adding teams and conferences, and rolling into new seasons.
 
-import { DEFAULT_LOGOS, AAU_LOGO_SET } from './logo-import.js?v=20261113234500';
-import { START_YEAR, CONFERENCES, CONF_LOGO_LINKS, COACHES, SIDES, sideOf, conferencesFor, seedTeams, makeTeam, fillSite } from './data.js?v=20261113234500';
-import { generateSchedule, blankGame, DAY_ORDER, DEFAULT_REG_WEEKS, DEFAULT_TOURNEY_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, PER_WEEK, confWeeksFor, confWeeksMax, confRounds, confSeriesCounts, confTarget } from './schedule.js?v=20261113234500';
-import { simulateGame, estimateHitsErrors } from './sim.js?v=20261113234500';
-import { generatePoll, releaseDuePolls } from './polls.js?v=20261113234500';
-import { replayRatings, ensureBase } from './ratings.js?v=20261113234500';
-import { progress, lockField, postWeeks, allEvents, regWeeksOf, fieldSize, DEFAULT_NCAA, OLD_DEFAULT_NCAA, pickConfHosts, postseasonFinish, citySiteNames, wsTeams } from './postseason.js?v=20261113234500';
-import { isFinal, records, INDEPENDENT } from './standings.js?v=20261113234500';
-import { rng, normal, clamp, hashStr } from './util.js?v=20261113234500';
+import { DEFAULT_LOGOS, AAU_LOGO_SET } from './logo-import.js?v=20261114151901';
+import { START_YEAR, CONFERENCES, CONF_LOGO_LINKS, COACHES, SIDES, sideOf, conferencesFor, seedTeams, makeTeam, fillSite } from './data.js?v=20261114151901';
+import { generateSchedule, blankGame, DAY_ORDER, DEFAULT_REG_WEEKS, DEFAULT_TOURNEY_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, PER_WEEK, confWeeksFor, confWeeksMax, confRounds, confSeriesCounts, confTarget } from './schedule.js?v=20261114151901';
+import { simulateGame, estimateHitsErrors } from './sim.js?v=20261114151901';
+import { generatePoll, releaseDuePolls } from './polls.js?v=20261114151901';
+import { replayRatings, ensureBase } from './ratings.js?v=20261114151901';
+import { progress, lockField, postWeeks, allEvents, regWeeksOf, fieldSize, DEFAULT_NCAA, OLD_DEFAULT_NCAA, pickConfHosts, postseasonFinish, citySiteNames, wsTeams } from './postseason.js?v=20261114151901';
+import { isFinal, records, INDEPENDENT } from './standings.js?v=20261114151901';
+import { rng, normal, clamp, hashStr } from './util.js?v=20261114151901';
 
 export const SCHEMA_VERSION = 4;
 
@@ -32,7 +32,7 @@ const WOMEN_REGIONS = [
 export function defaultSettings(side = 'women') {
   const base = {
     index: 'net', volatility: 1, confTourney: {}, confFormat: {}, mcwsName: 'Final Four', mcwsVenue: 'Target Center', mcwsCity: 'Minneapolis, Minn.', aqMin: 4, development: 'normal', form: 'normal',
-    periods: 4, confDays: 'tsu', confWeekend: { 'Ivy League': 'fs', 'University Athletic Association': 'fsu' }, challenge: true, regionSites: JSON.parse(JSON.stringify(WOMEN_REGIONS)),
+    periods: 4, confDays: 'tsu', confWeekend: { 'Ivy League': 'fs', 'University Athletic Association': 'fsu' }, challenge: true, regionMode: 'rotate', regionSites: JSON.parse(JSON.stringify(WOMEN_REGIONS)),
     regWeeks: DEFAULT_REG_WEEKS, tourneyWeeks: DEFAULT_TOURNEY_WEEKS, confMatches: DEFAULT_CONF_MATCHES, maxMatches: DEFAULT_MAX_MATCHES, ncaa: { ...DEFAULT_NCAA },
   };
   return side === 'men' ? { ...base, ...JSON.parse(JSON.stringify(MEN_SETTINGS)) } : base;

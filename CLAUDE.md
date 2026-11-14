@@ -40,8 +40,13 @@ owner asks.
 - Postseason stages keep the MCS internal names: `regionals` = regions,
   `supers`, `mcws` = the Final Four. Default 4 regions of 8 (32 teams):
   `campusRounds: 1` puts the round of 32 at the higher seed's arena, then the
-  Sweet 16 and Elite Eight at the region's neutral arena
-  (`settings.regionSites`) the next week (`homeWeeks: 2`). Men's Final Four
+  Sweet 16 and Elite Eight at the region's neutral arena the next week
+  (`homeWeeks: 2`). Region sites (`js/regions.js`, `regionSitesFor`): with
+  `regionMode` 'rotate' (the default) each season takes the next arenas from
+  `REGION_POOL`, the real regional sites since 2016 (men's by region: East,
+  South, Midwest, West; women's 14 cities, regions named for them), every
+  arena coming round before one repeats; 'fixed' uses `settings.regionSites`,
+  picked per region on the Settings page. Men's Final Four
   Saturday/Monday, women's Friday/Sunday. Conference tournaments take every
   team, single elimination on back-to-back days. User-facing text never says
   NCAA or MCWS.

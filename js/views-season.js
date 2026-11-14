@@ -1,14 +1,15 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261113234500';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261113234500';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261113234500';
-import { ovr } from './sim.js?v=20261113234500';
-import { simGames, addGame, weekName } from './league.js?v=20261113234500';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261113234500';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261113234500';
-import { fmtPct, hashStr } from './util.js?v=20261113234500';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261113234500';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261114151901';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261114151901';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261114151901';
+import { ovr } from './sim.js?v=20261114151901';
+import { simGames, addGame, weekName } from './league.js?v=20261114151901';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261114151901';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261114151901';
+import { fmtPct, hashStr } from './util.js?v=20261114151901';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261114151901';
+import { regionSitesFor } from './regions.js?v=20261114151901';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -1038,7 +1039,7 @@ function renderField(root) {
 // What a projected region is called: its neutral site's name (East, Albany…)
 // when the format has regional sites, otherwise its top seed's.
 function regionName(s, teams, i) {
-  const cfg = ncaaConfig(s), site = cfg.homeSites && cfg.campusRounds ? s.settings.regionSites?.[i] : null;
+  const cfg = ncaaConfig(s), site = cfg.homeSites && cfg.campusRounds ? regionSitesFor(s)[i] : null;
   return site?.name ? `${site.name} Region` : `${teams[0]} Region`;
 }
 

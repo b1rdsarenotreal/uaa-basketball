@@ -20,10 +20,11 @@
 // supers and mcws. The format is locked into the season when the field is
 // announced.
 
-import { blankGame, DAY_ORDER } from './schedule.js?v=20261113234500';
-import { sameConf, records, rpi, rating, indexName, usesNet, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261113234500';
-import { generatePoll } from './polls.js?v=20261113234500';
-import { hashStr } from './util.js?v=20261113234500';
+import { blankGame, DAY_ORDER } from './schedule.js?v=20261114151901';
+import { sameConf, records, rpi, rating, indexName, usesNet, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261114151901';
+import { generatePoll } from './polls.js?v=20261114151901';
+import { hashStr } from './util.js?v=20261114151901';
+import { regionSitesFor } from './regions.js?v=20261114151901';
 
 // ---------- tournament format ----------
 
@@ -972,7 +973,7 @@ export function lockField(season) {
   p.cfg = { ...DEFAULT_NCAA, ...(season.settings.ncaa || {}) };
   const field = [...p.field].sort((a, b) => a.seed - b.seed);
   const home = !!p.cfg.homeSites;
-  const sites = season.settings.regionSites || [];
+  const sites = regionSitesFor(season);
   p.regionals = pods(field, p.cfg.regionals, season).map((teams, i) => {
     const site = home && p.cfg.campusRounds ? sites[i] : null;
     return {

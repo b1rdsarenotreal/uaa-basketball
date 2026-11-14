@@ -25,9 +25,9 @@
 // When `prev` (last season) is given, conference opponents who met once last
 // year swap home and away.
 
-import { isIndependent } from './standings.js?v=20261113225427';
-import { cityPoint, miles } from './geo.js?v=20261113225427';
-import { rng, shuffle, hashStr } from './util.js?v=20261113225427';
+import { isIndependent } from './standings.js?v=20261113234500';
+import { cityPoint, miles } from './geo.js?v=20261113234500';
+import { rng, shuffle, hashStr } from './util.js?v=20261113234500';
 
 export const DEFAULT_REG_WEEKS = 18;
 export const DEFAULT_TOURNEY_WEEKS = 0; // kept for older code paths
@@ -278,9 +278,11 @@ function crossPairs(pool, teams, met, r) {
 // III school. Marquee games (two teams in the top third by rating) get
 // harder to add the more of them either team already has, so a top team
 // plays a few, not a whole non-conference schedule of them (the owner's
-// rule, Nov. 2026).
+// rule, Nov. 2026). Preseason tournament and challenge games count toward
+// those few; at 400 a top-third team averages about 3.5 non-conference
+// games against the rest of the top third.
 const levelCost = (x, y) => { const g = Math.abs(x - y); return g * 15 + Math.max(0, g - 16) * 60; };
-const MARQUEE = 100, marquee = new WeakMap();
+const MARQUEE = 400, marquee = new WeakMap();
 function marqueeOf(met, teams, lvl) {
   if (!marquee.has(met)) {
     const names = Object.keys(teams), top = new Set([...names].sort((a, b) => lvl(b) - lvl(a)).slice(0, Math.ceil(names.length / 3)));
@@ -427,7 +429,12 @@ export function generateSchedule(season, seed = hashStr(String(season.year)), pr
   // ---- preseason tournaments: four teams, three games, neutral site ----
   const tourneyGames = Object.fromEntries(names.map(n => [n, 0]));
   {
-    const order = names.map(n => [n, lvl(teams[n]) + (r() - 0.5) * 10]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+    // Each event draws one team from each quarter of the field by rating
+    // (with some give), so a top team meets one good team there, not three.
+    const ranked = names.map(n => [n, lvl(teams[n]) + (r() - 0.5) * 8]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+    const q = Math.ceil(ranked.length / 4), pots = [0, 1, 2, 3].map(i => shuffle(ranked.slice(i * q, (i + 1) * q), r));
+    const order = [];
+    for (let i = 0; i < q; i++) for (const pot of pots) if (pot[i]) order.push(pot[i]);
     const E = Math.floor(order.length / 4);
     const events = Array.from({ length: E }, () => []);
     // Fill events in order of level; a team goes to the first open event
@@ -505,6 +512,13 @@ export function generateSchedule(season, seed = hashStr(String(season.year)), pr
         challenge[la[k]]++; challenge[lb[k]]++;
       }
     }
+  }
+
+  // Marquee games already on the schedule (tournaments, the challenge) count
+  // toward each team's few.
+  {
+    const mq = marqueeOf(met, teams, t => lvl(teams[t]));
+    for (const g of games) if (!g.confGame && mq.top.has(g.home) && mq.top.has(g.away)) for (const t of [g.home, g.away]) mq.n[t] = (mq.n[t] || 0) + 1;
   }
 
   // ---- the rest of the non-conference schedule, any day of the week ----

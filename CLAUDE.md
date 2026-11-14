@@ -29,8 +29,11 @@ owner asks.
 - Schedule (`js/schedule.js`): week 1 starts the first Monday in November
   (`dateOf`); 18 weeks. Non-conference games on any day (no back-to-back
   days, no Thanksgiving or Dec 24–26), four-team round-robin preseason
-  tournaments at neutral sites (`g.venue`), a conference challenge week,
-  holiday showcases. Conference play is a double round robin capped at
+  tournaments at neutral sites (`g.venue`; each draws one team from each
+  quarter of the field by rating), a conference challenge week,
+  holiday showcases. Top-third teams play few non-conference games against
+  each other (`MARQUEE` 400 per one a team already has, tournament and
+  challenge games included). Conference play is a double round robin capped at
   `confMatches` (18), weeks 9–18 (early December for conferences needing more
   than 20 rounds), on each conference's days (`confWeekend[conf]`, else
   `settings.confDays`). Cap `maxMatches` 31.

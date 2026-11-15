@@ -46,7 +46,10 @@ owner asks.
   `REGION_POOL`, the real regional sites since 2016 (men's by region: East,
   South, Midwest, West; women's 14 cities, regions named for them), every
   arena coming round before one repeats; 'fixed' uses `settings.regionSites`,
-  picked per region on the Settings page. Men's Final Four
+  picked per region on the Settings page. On the Selection tab the
+  commissioner can send any region's top seed to another site ("Plays at";
+  `post.siteFor`, team -> site; `siteOrder` swaps the two regions' sites;
+  the bracket pairings don't change). Men's Final Four
   Saturday/Monday, women's Friday/Sunday. Conference tournaments take every
   team, single elimination on back-to-back days. User-facing text never says
   NCAA or MCWS.

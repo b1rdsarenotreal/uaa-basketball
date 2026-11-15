@@ -1,15 +1,15 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261114151901';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261114151901';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261114151901';
-import { ovr } from './sim.js?v=20261114151901';
-import { simGames, addGame, weekName } from './league.js?v=20261114151901';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261114151901';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261114151901';
-import { fmtPct, hashStr } from './util.js?v=20261114151901';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261114151901';
-import { regionSitesFor } from './regions.js?v=20261114151901';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261114193134';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261114193134';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261114193134';
+import { ovr } from './sim.js?v=20261114193134';
+import { simGames, addGame, weekName } from './league.js?v=20261114193134';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261114193134';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261114193134';
+import { fmtPct, hashStr } from './util.js?v=20261114193134';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261114193134';
+import { regionSitesFor, siteOrder } from './regions.js?v=20261114193134';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -1004,10 +1004,14 @@ function renderField(root) {
   root.innerHTML = `
     ${editable ? `<div class="hint">1. Pick the at-large teams (automatic qualifiers are in). 2. Confirm the ${B.size} teams. 3. Order seeds 1–${B.size}; the region preview updates as you go. 4. Announce the field.<br>${formatSummary(cfg)}</div>` : ''}
     ${confirmed
-      ? `<div class="sel-layout seeding">${seeding}${noRegionals(cfg) ? '' : regionalPreview(s, field, podList, r)}</div><details class="card sel-board-wrap" style="margin-top:16px"><summary><b>Selection board</b> <span class="muted small">(automatic qualifiers and the at-large board)</span></summary>${board}</details>`
+      ? `<div class="sel-layout seeding">${seeding}${noRegionals(cfg) ? '' : regionalPreview(s, field, podList, r, editable)}</div><details class="card sel-board-wrap" style="margin-top:16px"><summary><b>Selection board</b> <span class="muted small">(automatic qualifiers and the at-large board)</span></summary>${board}</details>`
       : `<div class="sel-layout picking">${board}${seeding}</div>`}
     <div style="margin-top:16px">${committeeBox()}</div>`;
   if (!editable) return;
+  $$('[data-siteof]', root).forEach(sel => (sel.onchange = () => {
+    (p.siteFor ||= {})[sel.dataset.siteof] = Number(sel.value);
+    changed({ progress: false });
+  }));
   const setField = list => { p.field = list.map((f, i) => ({ ...f, seed: i + 1 })); changed({ progress: false }); };
   $$('[data-al]', root).forEach(cb => (cb.onchange = () => {
     try { setAtLarge(s, cb.dataset.al, cb.checked); } catch (e) { cb.checked = !cb.checked; return toast(e.message, true); }
@@ -1038,12 +1042,17 @@ function renderField(root) {
 // average OVR is compared with the field's.
 // What a projected region is called: its neutral site's name (East, Albany…)
 // when the format has regional sites, otherwise its top seed's.
-function regionName(s, teams, i) {
-  const cfg = ncaaConfig(s), site = cfg.homeSites && cfg.campusRounds ? regionSitesFor(s)[i] : null;
+function regionName(s, teams, i, podList = null) {
+  const cfg = ncaaConfig(s), at = podList ? siteOrder(s, podList)[i] : i;
+  const site = cfg.homeSites && cfg.campusRounds ? regionSitesFor(s)[at] : null;
   return site?.name ? `${site.name} Region` : `${teams[0]} Region`;
 }
 
-function regionalPreview(s, field, podList, r) {
+function regionalPreview(s, field, podList, r, editable = false) {
+  // With neutral region sites, the commissioner can send each region's top
+  // seed to any site (the regions swap sites).
+  const cfg = ncaaConfig(s), sites = cfg.homeSites && cfg.campusRounds ? regionSitesFor(s) : null, order = siteOrder(s, podList);
+  const sitePick = (teams, i) => !(sites && editable) ? '' : `<label class="reg-site small">Plays at <select data-siteof="${esc(teams[0])}" aria-label="Region site for ${esc(teams[0])}">${sites.map((x, k) => `<option value="${k}" ${order[i] === k ? 'selected' : ''}>${esc(x.name)}: ${esc(x.city)}</option>`).join('')}</select></label>`;
   const seedOf = t => field.find(f => f.team === t)?.seed;
   const avg = list => list.reduce((a, t) => a + ovr(s.teams[t]), 0) / (list.length || 1);
   const all = avg(field.map(f => f.team));
@@ -1055,7 +1064,8 @@ function regionalPreview(s, field, podList, r) {
     const dupes = Object.entries(confs).filter(([, l]) => l.length > 1);
     const d = strengths[i] - all;
     return `<div class="reg-prev${dupes.length ? ' clash' : ''}">
-      <div class="reg-prev-head"><span class="reg-prev-title">${esc(regionName(s, teams, i))}</span><span class="reg-prev-ovr" title="Average OVR of the region's teams, compared with the whole field">OVR ${strengths[i].toFixed(1)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}</span></span></div>
+      <div class="reg-prev-head"><span class="reg-prev-title">${esc(regionName(s, teams, i, podList))}</span><span class="reg-prev-ovr" title="Average OVR of the region's teams, compared with the whole field">OVR ${strengths[i].toFixed(1)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}</span></span></div>
+      ${sitePick(teams, i)}
       ${firstRoundPairs(teams.length).map(pair => `<div class="reg-prev-pair${pair[1] && confClashes([[teams[pair[0] - 1], teams[pair[1] - 1]]], s).length ? ' clash' : ''}">${pair.map(k => { if (k == null) return '<div class="reg-prev-row bye"><span class="reg-prev-seed"></span><span class="reg-prev-team muted">Bye</span></div>'; const t = teams[k - 1], c = s.teams[t].conference, dup = confs[c].length > 1; return `<div class="reg-prev-row${dup ? ' dup' : ''}">
         <span class="reg-prev-seed">${k}</span><span class="reg-prev-team">${team(t, { rank: false, size: 16 })}</span>
         <span class="reg-prev-conf" title="${esc(c)}">${confLogo(c, 18)}${confInfo(c).logo ? `<span>${esc(confInfo(c).abbr || c)}</span>` : ''}</span>

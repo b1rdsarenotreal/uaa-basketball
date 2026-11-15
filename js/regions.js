@@ -1,5 +1,5 @@
 // Region sites for the national tournament.
-import { hashStr, rng, shuffle } from './util.js?v=20261114151901';
+import { hashStr, rng, shuffle } from './util.js?v=20261114193134';
 
 // Arenas that have hosted the NCAA tournament's regionals (men's Sweet 16
 // and Elite Eight sites, 2016–2026, by region; women's regional sites since
@@ -80,4 +80,19 @@ export function regionSitesFor(season) {
   };
   if (poolSide(st) === 'men') return Array.from({ length: n }, (_, i) => { const name = MEN_REGION_NAMES[i % 4]; return { name, ...pick(REGION_POOL.men[name], name, 1)[0] }; });
   return pick(REGION_POOL.women, 'women', n);
+}
+
+// Which site each region gets. Region i (the pod built around the i-th
+// best 1 seed) plays at site i, unless the commissioner sent its top seed
+// somewhere else on the Selection tab (`post.siteFor`: team -> site index);
+// the region that had that site takes the moved region's.
+export function siteOrder(season, pods) {
+  const order = pods.map((_, i) => i), pick = season.post?.siteFor || {};
+  pods.forEach((teams, i) => {
+    const want = pick[teams[0]];
+    if (want == null || want === order[i] || want < 0 || want >= pods.length) return;
+    const j = order.indexOf(want);
+    [order[i], order[j]] = [order[j], order[i]];
+  });
+  return order;
 }

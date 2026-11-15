@@ -1204,3 +1204,7 @@ button.bx-sg:hover { border-color: var(--muted); }
    older schedule had it); an empty slot when unranked keeps vs lined up. */
 .ts2-mine { flex: none; width: 30px; text-align: right; font: 700 13px/1 var(--mono); color: var(--muted); }
 .ts2-vs { flex: none; width: 18px; }
+
+/* Selection tab: send a region's top seed to another site. */
+.reg-site { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; color: var(--muted); }
+.reg-site select { flex: 1; min-width: 0; font: 500 12px var(--body); padding: 3px 6px; border-radius: 6px; }

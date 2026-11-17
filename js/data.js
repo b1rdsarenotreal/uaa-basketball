@@ -52,7 +52,7 @@
 // confirmed (some Division III programs) start as open jobs; name them on
 // the Coaches page. Arenas are each school's home court.
 
-import { DEFAULT_LOGOS } from './logo-import.js?v=20261116222145';
+import { DEFAULT_LOGOS } from './logo-import.js?v=20261116223240';
 
 export const START_YEAR = 2030;
 
@@ -62,6 +62,7 @@ export const START_YEAR = 2030;
 // Conference logos the owner picked from the web (linked, not copied; the
 // drawn ones in img/conf/ stay for CAC, SWC, UCAA and as fallbacks).
 export const CONF_LOGO_LINKS = {
+  wac: 'https://content.sportslogos.net/logos/153/4669/full/western_athletic_conference_logo_primary_19922010.png',
   bigten: 'https://content.sportslogos.net/logos/153/4661/full/big_ten_conference_logo_primary_20115933.png',
   ivy: 'https://content.sportslogos.net/logos/153/4824/full/ivy_league_logo_primary_2019_sportslogosnet-9024.png',
   metro: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/METRO_Primary_LtBG.png/500px-METRO_Primary_LtBG.png',

@@ -1,5 +1,5 @@
 // Region sites for the national tournament.
-import { hashStr, rng, shuffle } from './util.js?v=20261116230308';
+import { hashStr, rng, shuffle } from './util.js?v=20261116231822';
 
 // Arenas that have hosted the NCAA tournament's regionals (men's Sweet 16
 // and Elite Eight sites, 2016–2026, by region; women's regional sites since

@@ -10,6 +10,24 @@
 
 export const AAU_LOGO_SET = 'aau-dynasty-2026-11';
 export const DEFAULT_LOGOS = {
+  // The owner's next schools (Nov. 2026): ESPN's logos, and UT Dallas's
+  // Comets mark from its brand site (brand.utdallas.edu).
+  Arkansas: 'https://a.espncdn.com/i/teamlogos/ncaa/500/8.png',
+  Baylor: 'https://a.espncdn.com/i/teamlogos/ncaa/500/239.png',
+  Houston: 'https://a.espncdn.com/i/teamlogos/ncaa/500/248.png',
+  SMU: 'https://a.espncdn.com/i/teamlogos/ncaa/500/2567.png',
+  'Texas Tech': 'https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png',
+  'UT Dallas': 'https://brand.utdallas.edu/files/2023/11/Comets-clock-full-color-1.png',
+  'Saint Louis': 'https://a.espncdn.com/i/teamlogos/ncaa/500/139.png',
+  Memphis: 'https://a.espncdn.com/i/teamlogos/ncaa/500/235.png',
+  'Northern Arizona': 'https://a.espncdn.com/i/teamlogos/ncaa/500/2464.png',
+  'San Diego State': 'https://a.espncdn.com/i/teamlogos/ncaa/500/21.png',
+  Nevada: 'https://a.espncdn.com/i/teamlogos/ncaa/500/2440.png',
+  UNLV: 'https://a.espncdn.com/i/teamlogos/ncaa/500/2439.png',
+  'Oregon State': 'https://a.espncdn.com/i/teamlogos/ncaa/500/204.png',
+  BYU: 'https://a.espncdn.com/i/teamlogos/ncaa/500/252.png',
+  'Utah State': 'https://a.espncdn.com/i/teamlogos/ncaa/500/328.png',
+  'Washington State': 'https://a.espncdn.com/i/teamlogos/ncaa/500/265.png',
   // The bobcat with a gold UCM, made for the owner (Nov. 2026); hosted with this app.
   'UC Merced': 'https://b1rdsarenotreal.github.io/uaa-basketball/img/schools/uc-merced.svg',
   'Boston University': 'https://content.sportslogos.net/logos/30/619/full/boston_university_terriers_logo_secondary_2015_sportslogosnet-1868.png',

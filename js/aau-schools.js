@@ -1,4 +1,4 @@
-import { CONF_LOGO_LINKS } from './data.js?v=20261116232155';
+import { CONF_LOGO_LINKS } from './data.js?v=20261116233234';
 
 // Every AAU member school, for the "AAU school" pick on the Add team form:
 // abbreviation, mascot, colors, city and the conference it plays in in the
@@ -134,6 +134,23 @@ export const AAU_CONFERENCES = {
 // team form fills these in too.
 export const AAU_PROGRAMS = {
   women: {
+    // The owner's new schools (Nov. 2026): home venue only; coaches are added by hand.
+    "Arkansas": { stadium: "Bud Walton Arena" },
+    "Baylor": { stadium: "Foster Pavilion" },
+    "Houston": { stadium: "Fertitta Center" },
+    "SMU": { stadium: "Moody Coliseum" },
+    "Texas Tech": { stadium: "United Supermarkets Arena" },
+    "UT Dallas": { stadium: "UT Dallas Activity Center" },
+    "Saint Louis": { stadium: "Chaifetz Arena" },
+    "Memphis": { stadium: "Elma Roane Fieldhouse" },
+    "Northern Arizona": { stadium: "Rolle Activity Center" },
+    "San Diego State": { stadium: "Viejas Arena" },
+    "Nevada": { stadium: "Lawlor Events Center" },
+    "UNLV": { stadium: "Cox Pavilion" },
+    "Oregon State": { stadium: "Gill Coliseum" },
+    "BYU": { stadium: "Marriott Center" },
+    "Utah State": { stadium: "Dee Glen Smith Spectrum" },
+    "Washington State": { stadium: "Beasley Coliseum" },
     "Florida State": { stadium: "Donald L. Tucker Center", coach: "Brooke Wyckoff" },
     "Georgia": { stadium: "Stegeman Coliseum", coach: "Ayla Guzzardo" },
     "Iowa State": { stadium: "Hilton Coliseum", coach: "Bill Fennelly" },
@@ -143,6 +160,23 @@ export const AAU_PROGRAMS = {
     "UConn": { stadium: "Gampel Pavilion", coach: "Geno Auriemma" },
   },
   men: {
+    // The owner's new schools (Nov. 2026): home venue only; coaches are added by hand.
+    "Arkansas": { stadium: "Bud Walton Arena" },
+    "Baylor": { stadium: "Foster Pavilion" },
+    "Houston": { stadium: "Fertitta Center" },
+    "SMU": { stadium: "Moody Coliseum" },
+    "Texas Tech": { stadium: "United Supermarkets Arena" },
+    "UT Dallas": { stadium: "UT Dallas Activity Center" },
+    "Saint Louis": { stadium: "Chaifetz Arena" },
+    "Memphis": { stadium: "FedExForum" },
+    "Northern Arizona": { stadium: "Rolle Activity Center" },
+    "San Diego State": { stadium: "Viejas Arena" },
+    "Nevada": { stadium: "Lawlor Events Center" },
+    "UNLV": { stadium: "Thomas & Mack Center" },
+    "Oregon State": { stadium: "Gill Coliseum" },
+    "BYU": { stadium: "Marriott Center" },
+    "Utah State": { stadium: "Dee Glen Smith Spectrum" },
+    "Washington State": { stadium: "Beasley Coliseum" },
     "Florida State": { stadium: "Donald L. Tucker Center", coach: "Luke Loucks" },
     "Georgia": { stadium: "Stegeman Coliseum", coach: "Mike White" },
     "Iowa State": { stadium: "Hilton Coliseum", coach: "T.J. Otzelberger" },

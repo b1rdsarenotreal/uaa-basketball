@@ -1,16 +1,16 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117182452';
-import { partnersOf } from './partners.js?v=20261117182452';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117182452';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117182452';
-import { ovr } from './sim.js?v=20261117182452';
-import { simGames, addGame, weekName } from './league.js?v=20261117182452';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117182452';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117182452';
-import { fmtPct, hashStr } from './util.js?v=20261117182452';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117182452';
-import { regionSitesFor, siteOrder } from './regions.js?v=20261117182452';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117224919';
+import { partnersOf } from './partners.js?v=20261117224919';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117224919';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117224919';
+import { ovr } from './sim.js?v=20261117224919';
+import { simGames, addGame, weekName } from './league.js?v=20261117224919';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117224919';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, shownNationalSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117224919';
+import { fmtPct, hashStr } from './util.js?v=20261117224919';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117224919';
+import { regionSitesFor, siteOrder } from './regions.js?v=20261117224919';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -1152,7 +1152,7 @@ function renderBoard(root, extra = 0) {
     <div class="bb-side">${order[0].map(ev => region(ev, false)).join('')}</div>
     ${finals}
     <div class="bb-side">${order[1].map(ev => region(ev, true)).join('')}</div></div></div>
-    <p class="small muted">Seeds inside a region are regional seeds; the ${name} shows national seeds. Click a game for its box score.</p>`;
+    <p class="small muted">Every team keeps its region seed through the ${name}. Click a game for its box score.</p>`;
   fitBoard(root, extra);
 }
 // Size the board to the window (see below). It refits when the window
@@ -1185,11 +1185,11 @@ function renderRegionals(root) {
   root.innerHTML = `${open ? '<div class="row" style="margin-bottom:12px"><span class="spacer"></span><button class="btn primary" id="rg-sim">🎲 Sim regions</button></div>' : ''}
     ${p.regionals.map(ev => {
       const seed = t => { const i = ev.seeds.indexOf(t); return i >= 0 ? i + 1 : null; };
-      const top = ev.top || ev.host, nat = shownSeed(s, top);
+      const top = ev.top || ev.host, nat = shownNationalSeed(s, top);
       const camp = ev.campusRounds ? (ev.campusRounds === 1 ? 'the first round' : `the first ${ev.campusRounds} rounds`) : '';
       const where = ev.homeSites ? (camp && ev.venue ? `${camp} at the higher seed's arena, then ${esc(ev.venue.stadium)}, ${esc(ev.venue.city)}` : `every game at the higher seed's arena`) : `hosted by ${esc(ev.host)}${atField(s, ev.host)}`;
       return `<div class="card" id="${evAnchor(ev.id)}"><div class="row" style="margin-bottom:6px"><h2 style="margin:0">${esc(ev.name)}</h2>${ev.champion ? `<span class="badge gold">To the ${esc(s.settings.mcwsName)}: ${esc(ev.champion)}</span>` : ''}</div>
-      <div class="small muted" style="margin-bottom:8px">First round: ${firstRoundPairs(ev.seeds.length).map(([a, b]) => `${a} ${esc(ev.seeds[a - 1])} ${b ? `vs. ${b} ${esc(ev.seeds[b - 1])}` : '(bye)'}`).join(' · ')}. Single elimination, led by ${esc(top)}${nat ? ` (No. ${nat} national seed)` : ''}${(n2 => (n2 ? ` and ${esc(ev.seeds[1])} (No. ${n2})` : ''))(ev.seeds[1] && shownSeed(s, ev.seeds[1]))}, ${where}</div>
+      <div class="small muted" style="margin-bottom:8px">First round: ${firstRoundPairs(ev.seeds.length).map(([a, b]) => `${a} ${esc(ev.seeds[a - 1])} ${b ? `vs. ${b} ${esc(ev.seeds[b - 1])}` : '(bye)'}`).join(' · ')}. Single elimination, led by ${esc(top)}${nat ? ` (No. ${nat} national seed)` : ''}${(n2 => (n2 ? ` and ${esc(ev.seeds[1])} (No. ${n2})` : ''))(ev.seeds[1] && shownNationalSeed(s, ev.seeds[1]))}, ${where}</div>
       ${eventBracket(ev, seed)}</div>`; }).join('')}`;
   if ($('#rg-sim', root)) $('#rg-sim', root).onclick = () => simAndReport(g => g.type === 'regional', 'in the regions');
 }

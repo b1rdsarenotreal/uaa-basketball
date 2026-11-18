@@ -20,11 +20,11 @@
 // supers and mcws. The format is locked into the season when the field is
 // announced.
 
-import { blankGame, DAY_ORDER } from './schedule.js?v=20261117182452';
-import { sameConf, records, rpi, rating, indexName, usesNet, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261117182452';
-import { generatePoll } from './polls.js?v=20261117182452';
-import { hashStr } from './util.js?v=20261117182452';
-import { regionSitesFor, siteOrder } from './regions.js?v=20261117182452';
+import { blankGame, DAY_ORDER } from './schedule.js?v=20261117224919';
+import { sameConf, records, rpi, rating, indexName, usesNet, confStandings, conferences, isFinal, winnerOf, loserOf, isTie, resultFor, regularSeasonDone, regSeasonChamp, regSeasonChamps, quadrants } from './standings.js?v=20261117224919';
+import { generatePoll } from './polls.js?v=20261117224919';
+import { hashStr } from './util.js?v=20261117224919';
+import { regionSitesFor, siteOrder } from './regions.js?v=20261117224919';
 
 // ---------- tournament format ----------
 
@@ -58,15 +58,20 @@ export function ncaaConfig(season) {
   return { ...DEFAULT_NCAA, ...(season.post?.cfg || season.settings?.ncaa || {}) };
 }
 
-// The national seed shown for a team: only the top national seeds carry one
-// on screen — the top two in each region (1–8 with four regions), which set
-// the Final Four bracket. Inside a region every team shows its region seed
-// instead (regionalSeed).
+// A team's seed inside its region, 1 to the region's size.
 export function regionalSeed(season, team) {
   const ev = season.post?.regionals?.find(e => e.seeds.includes(team));
   return ev ? ev.seeds.indexOf(team) + 1 : null;
 }
+// The seed shown for a team in the national tournament: its region seed,
+// kept all the way through (a 1 seed is a 1 seed at the finals, whatever
+// region it came from; the owner's rule, Nov. 2026). With no regions, the
+// national seed.
 export function shownSeed(season, team) {
+  return regionalSeed(season, team) ?? shownNationalSeed(season, team);
+}
+// The national seed on screen: only the top national seeds carry one.
+export function shownNationalSeed(season, team) {
   const p = season.post;
   const f = p?.field?.find(x => x.team === team), cfg = ncaaConfig(season);
   return f && f.seed <= (noRegionals(cfg) ? cfg.wsSize : cfg.regionals * Math.min(2, cfg.perRegional)) ? f.seed : null;

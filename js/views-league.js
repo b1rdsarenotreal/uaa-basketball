@@ -1,22 +1,22 @@
 // League pages: teams, team profiles, conferences, history, settings.
 
-import { readAauLogos, applyAauLogos, DEFAULT_LOGOS } from './logo-import.js?v=20261117182452';
-import { AAU_SCHOOLS, AAU_CONFERENCES, AAU_PROGRAMS } from './aau-schools.js?v=20261117182452';
-import { realignmentFor, applyRealignment, skipRealignment, JOIN_RATING, onRealignmentLoaded } from './realign.js?v=20261117182452';
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, flushSave, cache, team, teamInfo, logoImg, teamOptions, teamHref, confLogo, confHref, confInfo, confColor, imageFileToDataUrl, readableOn, openGame, resultText, periodNote, gameDateOf, seasonLabel, seasonSpan } from './ui.js?v=20261117182452';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, confStandings, regSeasonChamp, regSeasonChamps, isIndependent } from './standings.js?v=20261117182452';
-import { ovr } from './sim.js?v=20261117182452';
-import { latestPoll, pollRankMap, pollSizeOf, POLL_SIZES, DEFAULT_POLL_SIZE } from './polls.js?v=20261117182452';
-import { addTeam, removeTeam, renameTeam, addConference, renameConference, deleteConference, rebuildSchedule, startNextSeason, weekName, newLeague, beginOffseason, draftRemoveTeam, draftRestoreTeam, draftWarnings, coachName, coachSchool, hireCoach, newCoach, availableCoaches, backfillHitsErrors, placeRemaining, clearPoints, pointsLeft, migrateLeague, applyAlignment, canApplyAlignment, syncCoachBonus, devTotal, coachResumes, coachPrestige, prestigeLabel, coachBonus, programPrestiges, programLabel, fitLabel } from './league.js?v=20261117182452';
-import { hotSeat, HEAT } from './hotseat.js?v=20261117182452';
-import { setRating } from './ratings.js?v=20261117182452';
-import { confFormatName, aqConferences, aqMinOf, postseasonFinish, postseasonDetail, postseasonRecord, wsTeams, postWeeks, regWeeksOf, ncaaConfig, ncaaProblems, fieldSize, hasSupers, formatSummary, proposeField, DEFAULT_NCAA, mcwsVenue, allEvents, gameVenue } from './postseason.js?v=20261117182452';
-import { DEFAULT_TOURNEY_WEEKS, DEFAULT_REG_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, confTarget } from './schedule.js?v=20261117182452';
-import { exportLeague, clearLeague } from './store.js?v=20261117182452';
-import { conferencesFor, sideOf } from './data.js?v=20261117182452';
-import { clamp, fmtPct } from './util.js?v=20261117182452';
-import { recordBook, teamPollHistory, headToHead } from './records.js?v=20261117182452';
-import { regionSitesFor, regionChoices } from './regions.js?v=20261117182452';
+import { readAauLogos, applyAauLogos, DEFAULT_LOGOS } from './logo-import.js?v=20261117224919';
+import { AAU_SCHOOLS, AAU_CONFERENCES, AAU_PROGRAMS } from './aau-schools.js?v=20261117224919';
+import { realignmentFor, applyRealignment, skipRealignment, JOIN_RATING, onRealignmentLoaded } from './realign.js?v=20261117224919';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, flushSave, cache, team, teamInfo, logoImg, teamOptions, teamHref, confLogo, confHref, confInfo, confColor, imageFileToDataUrl, readableOn, openGame, resultText, periodNote, gameDateOf, seasonLabel, seasonSpan } from './ui.js?v=20261117224919';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, confStandings, regSeasonChamp, regSeasonChamps, isIndependent } from './standings.js?v=20261117224919';
+import { ovr } from './sim.js?v=20261117224919';
+import { latestPoll, pollRankMap, pollSizeOf, POLL_SIZES, DEFAULT_POLL_SIZE } from './polls.js?v=20261117224919';
+import { addTeam, removeTeam, renameTeam, addConference, renameConference, deleteConference, rebuildSchedule, startNextSeason, weekName, newLeague, beginOffseason, draftRemoveTeam, draftRestoreTeam, draftWarnings, coachName, coachSchool, hireCoach, newCoach, availableCoaches, backfillHitsErrors, placeRemaining, clearPoints, pointsLeft, migrateLeague, applyAlignment, canApplyAlignment, syncCoachBonus, devTotal, coachResumes, coachPrestige, prestigeLabel, coachBonus, programPrestiges, programLabel, fitLabel } from './league.js?v=20261117224919';
+import { hotSeat, HEAT } from './hotseat.js?v=20261117224919';
+import { setRating } from './ratings.js?v=20261117224919';
+import { confFormatName, aqConferences, aqMinOf, postseasonFinish, postseasonDetail, postseasonRecord, wsTeams, postWeeks, regWeeksOf, ncaaConfig, ncaaProblems, fieldSize, hasSupers, formatSummary, proposeField, DEFAULT_NCAA, mcwsVenue, allEvents, gameVenue } from './postseason.js?v=20261117224919';
+import { DEFAULT_TOURNEY_WEEKS, DEFAULT_REG_WEEKS, DEFAULT_CONF_MATCHES, DEFAULT_MAX_MATCHES, confTarget } from './schedule.js?v=20261117224919';
+import { exportLeague, clearLeague } from './store.js?v=20261117224919';
+import { conferencesFor, sideOf } from './data.js?v=20261117224919';
+import { clamp, fmtPct } from './util.js?v=20261117224919';
+import { recordBook, teamPollHistory, headToHead } from './records.js?v=20261117224919';
+import { regionSitesFor, regionChoices } from './regions.js?v=20261117224919';
 
 const ui = { confFilter: '', ncaaDraft: null, teamSort: { k: 'ovr', dir: -1 }, coachSort: { k: 'now', dir: -1 }, teamTab: 'season', h2hSort: { k: 'g', dir: -1 }, h2hFilter: 'all', memberSort: { k: 'titles', dir: -1 } };
 

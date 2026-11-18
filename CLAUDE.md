@@ -113,6 +113,11 @@ owner asks.
   school. Travel-partner conferences are left alone (they're built that
   way). A once-a-year pair swaps hosts from last year unless the rule needs
   otherwise.
+- Seeds on screen in the national tournament (`shownSeed` in
+  `js/postseason.js`, the owner's rule, Nov. 2026): every team keeps its
+  region seed all the way through, so a 1 seed is still a 1 at the finals,
+  whatever region it came from. National seeds (`shownNationalSeed`) show
+  only where they're named (a region's top seeds) and with no regions.
 - Regionals avoid first-round matchups between conference rivals
   (`avoidConferenceMatchups` in `js/postseason.js`, the owner's rule): after
   the serpentine, teams on one seed line trade regionals (lowest lines

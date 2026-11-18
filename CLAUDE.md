@@ -102,6 +102,17 @@ owner asks.
   doubled); when it can't (an 8-team single round robin, for one), the
   conference gets the plain round robin. `season.partnerConfs` lists the
   conferences scheduled in pairs.
+- Conference home and away (`js/homeaway.js`, the owner's rule, Nov. 2026):
+  no team plays more than two conference weekends in a row away (`MAX_AWAY`)
+  or three at home (`MAX_HOME`); a week without a conference game ends a
+  run. `generateSchedule` draws the season (`drawSchedule`), then
+  `spreadConfHomes` trades hosts between a pair's two meetings, turns around
+  triangles of single meetings or a single meeting (every team within one
+  game or series of half), and trades two conference weeks when every team
+  plays on the same days in both. A pair meeting twice keeps one at each
+  school. Travel-partner conferences are left alone (they're built that
+  way). A once-a-year pair swaps hosts from last year unless the rule needs
+  otherwise.
 - Regionals avoid first-round matchups between conference rivals
   (`avoidConferenceMatchups` in `js/postseason.js`, the owner's rule): after
   the serpentine, teams on one seed line trade regionals (lowest lines

@@ -357,6 +357,17 @@ console.log(`${n} checks ok in ${Date.now() - t0} ms`);
       const cnt = {}, trips = {};
       for (const g of mine) { for (const t of [g.home, g.away]) cnt[t] = (cnt[t] || 0) + 1; (trips[`${g.away}|${g.week}`] ||= []).push(g.home); }
       assert3.equal(new Set(Object.values(cnt)).size, 1, `${side} ${c}: even conference schedules`);
+      // Never more than two conference weekends in a row away from home.
+      if (used) for (const t of list) {
+        const wk = {};
+        for (const g of mine) if (g.home === t || g.away === t) (wk[g.week] ||= []).push(g.home === t);
+        let run = 0, prev = null;
+        for (const w of Object.keys(wk).map(Number).sort((x, y) => x - y)) {
+          run = (prev != null && w - prev > 1) ? 0 : run; prev = w;
+          run = wk[w].every(h => !h) ? run + 1 : 0;
+          assert3.ok(run <= 2, `${side} ${c}: ${t} away three conference weekends in a row`);
+        }
+      }
       for (const [k, hosts] of Object.entries(trips)) if (used && hosts.length === 2) assert3.equal(mate[hosts[0]], hosts[1], `${side} ${c}: ${k} visits ${hosts.join(' and ')}, not a pair`);
     }
   }
@@ -365,6 +376,14 @@ console.log(`${n} checks ok in ${Date.now() - t0} ms`);
   const [a, b] = PT.partnersOf(s, c, list).pairs[0], [x] = PT.partnersOf(s, c, list).pairs[1];
   s.settings.partners = { [c]: [[a, x]] };
   assert3.ok(PT.partnersOf(s, c, list).pairs.some(q => q.includes(a) && q.includes(x)), 'a hand-set pair is kept');
+  // Two schools set to travel alone: still an even conference schedule.
+  s.settings.partners = {}; s.settings.partnerSolos = { [c]: [a, b] };
+  assert3.deepEqual(PT.partnersOf(s, c, list).solos.slice(0, 2), [a, b]);
+  {
+    const g2 = SCH.generateSchedule(s, 5).filter(g => g.confGame && list.includes(g.home)), cnt = {};
+    for (const g of g2) for (const t of [g.home, g.away]) cnt[t] = (cnt[t] || 0) + 1;
+    assert3.equal(new Set(Object.values(cnt)).size, 1, 'even with two schools alone');
+  }
   s.settings.partnersOff = { [c]: true };
   assert3.equal(PT.partnersOf(s, c, list), null, 'turned off');
   console.log('travel partners ok');

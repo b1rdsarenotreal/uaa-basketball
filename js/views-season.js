@@ -1,16 +1,16 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117172925';
-import { partnersOf } from './partners.js?v=20261117172925';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117172925';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117172925';
-import { ovr } from './sim.js?v=20261117172925';
-import { simGames, addGame, weekName } from './league.js?v=20261117172925';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117172925';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117172925';
-import { fmtPct, hashStr } from './util.js?v=20261117172925';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117172925';
-import { regionSitesFor, siteOrder } from './regions.js?v=20261117172925';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117175616';
+import { partnersOf } from './partners.js?v=20261117175616';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117175616';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117175616';
+import { ovr } from './sim.js?v=20261117175616';
+import { simGames, addGame, weekName } from './league.js?v=20261117175616';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117175616';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117175616';
+import { fmtPct, hashStr } from './util.js?v=20261117175616';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117175616';
+import { regionSitesFor, siteOrder } from './regions.js?v=20261117175616';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -235,13 +235,15 @@ function confHead(c, sub = '', extra = '', attrs = '', logo = 48) {
 // → Rebuild).
 function partnerBlock(s, c, list) {
   if (list.length < 4) return '';
-  const p = partnersOf(s, c, list), off = !p, custom = !!s.settings.partners?.[c]?.length;
-  const opts = (a, b) => list.filter(t => t !== a).map(t => `<option value="${esc(t)}" ${t === b ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  const p = partnersOf(s, c, list), off = !p, custom = !!(s.settings.partners?.[c]?.length || s.settings.partnerSolos?.[c]?.length);
+  const mate = {};
+  if (p) for (const [a, b] of p.pairs) { mate[a] = b; mate[b] = a; }
+  const sorted = [...list].sort((a, b) => a.localeCompare(b));
+  const row = t => `<div class="tp-pair">${team(t, { size: 18, rank: false })}<select data-tp="${esc(c)}" data-tpa="${esc(t)}" aria-label="${esc(t)}'s travel partner"><option value="" ${mate[t] ? '' : 'selected'}>No partner</option>${sorted.filter(x => x !== t).map(x => `<option value="${esc(x)}" ${mate[t] === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>`;
   return `<div class="tp-box"><label class="check"><input type="checkbox" data-tpon="${esc(c)}" ${off ? '' : 'checked'}> <b>Travel partners</b> <span class="muted">a pair visits a pair for the weekend, two games each</span></label>
-    ${off ? '' : `<div class="tp-pairs">${p.pairs.map(([a, b]) => `<div class="tp-pair">${team(a, { size: 18, rank: false })}<span class="muted">with</span><select data-tp="${esc(c)}" data-tpa="${esc(a)}">${opts(a, b)}</select></div>`).join('')}
-      ${p.solo ? `<div class="tp-pair">${team(p.solo, { size: 18, rank: false })}<span class="muted">no partner</span></div>` : ''}</div>
+    ${off ? '' : `<div class="tp-pairs">${sorted.map(row).join('')}</div>
       ${s.partnerConfs && !s.partnerConfs.includes(c) ? `<div class="hint small">This season's schedule couldn't be built around these pairs (the conference's size and game count don't fit pair weekends with home and away even), so it plays a regular round robin.</div>` : ''}
-      <div class="muted">${custom ? 'Set by hand. ' : 'Closest schools paired. '}Changes apply when a schedule is built: next season, or Settings → Rebuild.${custom ? ` <button type="button" class="btn sm ghost" data-tpreset="${esc(c)}">Pair by distance</button>` : ''}</div>`}</div>`;
+      <div class="muted">${custom ? 'Set by hand. ' : 'Closest schools paired. '}Pick anyone's partner, or No partner. A school on its own plays both schools of a pair in a weekend, or one game against another school on its own. Changes apply when a schedule is built: next season, or Settings → Rebuild.${custom ? ` <button type="button" class="btn sm ghost" data-tpreset="${esc(c)}">Pair by distance</button>` : ''}</div>`}</div>`;
 }
 function bindPartners(s) {
   $$('[data-tpon]').forEach(b => (b.onchange = () => {
@@ -250,21 +252,23 @@ function bindPartners(s) {
     changed({ progress: false });
   }));
   $$('[data-tp]').forEach(sel => (sel.onchange = () => {
-    const c = sel.dataset.tp, a = sel.dataset.tpa, x = sel.value;
+    const c = sel.dataset.tp, a = sel.dataset.tpa, x = sel.value || null;
     const list = Object.keys(s.teams).filter(t => s.teams[t].conference === c);
-    const p = partnersOf(s, c, list), pairs = p.pairs.map(q => [...q]);
-    const mine = pairs.find(q => q.includes(a)), b = mine.find(t => t !== a), theirs = pairs.find(q => q.includes(x));
-    // a and x become partners; their old partners pair up (or b is left
-    // without one when x had none).
-    const y = theirs ? theirs.find(t => t !== x) : null;
-    const next = pairs.filter(q => q !== mine && q !== theirs);
-    next.push([a, x]);
-    if (y) next.push([b, y]);
-    s.settings.partners ||= {}; s.settings.partners[c] = next;
+    const p = partnersOf(s, c, list), mate = {};
+    for (const [u, v] of p.pairs) { mate[u] = v; mate[v] = u; }
+    const b = mate[a] || null, y = x ? mate[x] || null : null;
+    delete mate[a]; if (b) delete mate[b]; if (x) delete mate[x]; if (y) delete mate[y];
+    if (x) { mate[a] = x; mate[x] = a; }
+    // Their old partners pair up when both had one; otherwise they travel alone.
+    if (b && y && b !== x) { mate[b] = y; mate[y] = b; }
+    const pairs = [], solos = [];
+    for (const t of list) { if (mate[t]) { if (t < mate[t]) pairs.push([t, mate[t]]); } else solos.push(t); }
+    s.settings.partners ||= {}; s.settings.partners[c] = pairs;
+    s.settings.partnerSolos ||= {}; s.settings.partnerSolos[c] = solos;
     changed({ progress: false });
-    toast(`${c}: ${a} and ${x} now travel together.`);
+    toast(x ? `${c}: ${a} and ${x} now travel together.` : `${c}: ${a} travels alone.`);
   }));
-  $$('[data-tpreset]').forEach(b => (b.onclick = () => { delete s.settings.partners?.[b.dataset.tpreset]; changed({ progress: false }); }));
+  $$('[data-tpreset]').forEach(b => (b.onclick = () => { delete s.settings.partners?.[b.dataset.tpreset]; delete s.settings.partnerSolos?.[b.dataset.tpreset]; changed({ progress: false }); }));
 }
 
 export function renderStandings() {

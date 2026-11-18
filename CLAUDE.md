@@ -88,8 +88,14 @@ owner asks.
   off in Standings → Commissioner: `settings.partners[conf]`,
   `settings.partnersOff[conf]`). A pair visits a pair for a weekend: each
   visitor plays one host on the first day and the other on the second.
-  Partners meet on their pair's open weekend (or a rivalry weekend); an odd
-  school out has no partner and plays both schools of a pair in a weekend.
+  Partners meet on their pair's open weekend (or a rivalry weekend); a
+  school without a partner (the odd one out, or any the commissioner sets:
+  `settings.partnerSolos[conf]`; every school's partner is a menu) plays
+  both schools of a pair in a weekend, or one game against another school on
+  its own. No team is away more than two conference weekends in a row, or
+  home more than three (the owner's rule, Nov. 2026: hosts and the order of
+  weekends are searched for it). A partner game can't share a weekend with
+  a school on its own (three schools need three days).
   `partnerRounds` builds everyone-once, everyone-twice or in between (second
   meetings left out by whole weekends where it can), with hosts chosen so
   each team is home for half (one off at most when meetings aren't all

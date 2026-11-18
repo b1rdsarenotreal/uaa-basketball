@@ -4,17 +4,19 @@
 // one host, on the second they swap (USC at Arizona and UCLA at Arizona
 // State, then USC at Arizona State and UCLA at Arizona). Partners meet on
 // the weekend their pair has no other pair to play, or on a rivalry weekend
-// when every pair has one. In a conference with an odd number of schools one
-// school has no partner: it plays both schools of a pair in a weekend.
+// when every pair has one. A school without a partner (the odd one out, or
+// any the commissioner sets) plays both schools of a pair in a weekend, or a
+// single game against another school on its own.
 //
 // Partners are picked by distance (`autoPartners`, the closest pairing
 // overall) unless the commissioner set them (`settings.partners[conf]`, a
-// list of [a, b]); `settings.partnersOff[conf]` turns them off for a
+// list of [a, b], and `settings.partnerSolos[conf]` for schools set to travel
+// alone); `settings.partnersOff[conf]` turns them off for a
 // conference. The schedule uses them when each team plays everyone at least
 // once and at most twice; otherwise it falls back to the plain round robin.
 
-import { cityPoint, miles } from './geo.js?v=20261117172925';
-import { shuffle } from './util.js?v=20261117172925';
+import { cityPoint, miles } from './geo.js?v=20261117175616';
+import { shuffle } from './util.js?v=20261117175616';
 
 const KEY = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -60,16 +62,19 @@ export function autoPartners(list, teams) {
   return { pairs, solo: solo ? names[solo[0]] : null };
 }
 
-// This conference's partners: the commissioner's pairs still in it, the rest
-// paired by distance among themselves. null when turned off.
+// This conference's partners: the commissioner's pairs (and schools set to
+// travel alone) still in it, the rest paired by distance among themselves.
+// { pairs, solos } (solos: schools without a partner); null when turned off.
 export function partnersOf(season, conf, list) {
   if (season.settings?.partnersOff?.[conf]) return null;
-  const set = new Set(list), used = new Set(), pairs = [];
+  const set = new Set(list), used = new Set(), pairs = [], solos = [];
   for (const [a, b] of season.settings?.partners?.[conf] || []) {
     if (a !== b && set.has(a) && set.has(b) && !used.has(a) && !used.has(b)) { pairs.push([a, b]); used.add(a); used.add(b); }
   }
+  for (const t of season.settings?.partnerSolos?.[conf] || []) if (set.has(t) && !used.has(t)) { solos.push(t); used.add(t); }
   const auto = autoPartners(list.filter(t => !used.has(t)), season.teams);
-  return { pairs: [...pairs, ...auto.pairs], solo: auto.solo };
+  if (auto.solo) solos.push(auto.solo);
+  return { pairs: [...pairs, ...auto.pairs], solos, solo: solos[0] || null };
 }
 
 // Circle-method round robin of units (null = bye), in shuffled order.
@@ -98,7 +103,7 @@ function unitRoundRobin(units, r) {
 export function partnerRounds(list, partners, target, r, prefer = () => 0) {
   const n = list.length;
   if (!partners || n < 4 || !partners.pairs.length || target < n - 1 || target > 2 * (n - 1)) return null;
-  const units = [...partners.pairs.map(p => [...p]), ...(partners.solo ? [[partners.solo]] : [])];
+  const units = [...partners.pairs.map(p => [...p]), ...(partners.solos || (partners.solo ? [partners.solo] : [])).map(t => [t])];
   const unitRounds = unitRoundRobin(units, r);
   const allMeet = unitRounds.every(round => round.every(([u, v]) => u && v));
   // A leg: weekends of items. An item is a meeting of two units (the visitor
@@ -148,22 +153,22 @@ export function partnerRounds(list, partners, target, r, prefer = () => 0) {
       legs.push(best);
     } else legs.push(second);
   }
-  // Hosts. One choice per item key: for a meeting, which unit hosts in leg 1
-  // (the other hosts in leg 2); for partners, which one hosts in leg 1.
+  // Hosts and the order of the weekends. One host choice per item key: for a
+  // meeting, which unit hosts in leg 1 (the other hosts in leg 2); for
+  // partners, which one hosts in leg 1. Each team should be home for half
+  // its games (as near as the count allows), never away more than two
+  // conference weekends in a row nor home more than three (the owner's rule,
+  // Nov. 2026), and a meeting this year only once swaps last year's host.
   const all = legs.flat(2), keys = [...new Set(all.map(it => it.key))];
   const pick = new Map(keys.map(k => [k, r() < 0.5]));
   const hostOf = it => { const f = pick.get(it.key) !== (it.leg === 1); return it.kind === 'meet' ? (f ? it.u : it.v) : (f ? it.u[0] : it.u[1]); };
-  const homeCount = () => {
-    const h = Object.fromEntries(list.map(t => [t, 0])), g = Object.fromEntries(list.map(t => [t, 0]));
-    for (const it of all) {
-      if (it.kind === 'mates') { h[hostOf(it)]++; g[it.u[0]]++; g[it.u[1]]++; continue; }
-      const host = hostOf(it), away = host === it.u ? it.v : it.u;
-      for (const t of host) { h[t] += away.length; g[t] += away.length; }
-      for (const t of away) g[t] += host.length;
-    }
-    return { h, g };
+  // Home and away games of each team in an item.
+  const tally = (it, h, g) => {
+    if (it.kind === 'mates') { const host = hostOf(it); h[host] = (h[host] || 0) + 1; g[it.u[0]] = (g[it.u[0]] || 0) + 1; g[it.u[1]] = (g[it.u[1]] || 0) + 1; return; }
+    const host = hostOf(it), away = host === it.u ? it.v : it.u;
+    for (const t of host) { h[t] = (h[t] || 0) + away.length; g[t] = (g[t] || 0) + away.length; }
+    for (const t of away) g[t] = (g[t] || 0) + host.length;
   };
-  // Last year's hosts: a meeting this year only once goes the other way.
   const lastCost = () => all.reduce((c, it) => {
     if (legs.length > 1 && all.filter(x => x.key === it.key).length > 1) return c;
     const host = hostOf(it);
@@ -172,22 +177,58 @@ export function partnerRounds(list, partners, target, r, prefer = () => 0) {
     const p = prefer(a, b);
     return c + ((p < 0 && hostIsA) || (p > 0 && !hostIsA) ? 1 : 0);
   }, 0);
-  // Home for exactly half when every meeting comes twice; otherwise (one
-  // meeting, or some second meetings left out) at most one game off half:
-  // partners split their game, so they can't both be exact.
+  // Exactly half when every meeting comes twice; otherwise at most one game
+  // off half (partners split their game, so they can't both be exact).
   const slack = target === 2 * (n - 1) ? 0 : 2;
-  const cost = () => { const { h, g } = homeCount(); return list.reduce((c, t) => c + Math.max(0, Math.abs(2 * h[t] - g[t]) - Math.max(slack, g[t] % 2)) * 100, 0) + lastCost(); };
-  let cur = cost();
-  for (let pass = 0; pass < 60 && cur >= 100; pass++) {
-    let moved = false;
-    for (const k of shuffle(keys, r)) {
-      pick.set(k, !pick.get(k));
-      const c = cost();
-      if (c < cur || (c === cur && r() < 0.2)) { if (c < cur) moved = true; cur = c; } else pick.set(k, !pick.get(k));
+  const MAX_AWAY = 2, MAX_HOME = 3;
+  const cost = order => {
+    const h = {}, g = {};
+    for (const it of all) tally(it, h, g);
+    let c = list.reduce((x, t) => x + Math.max(0, Math.abs(2 * (h[t] || 0) - g[t]) - Math.max(slack, g[t] % 2)) * 1000, 0);
+    // Runs of all-away or all-home weekends.
+    const runA = {}, runH = {};
+    for (const w of order) {
+      const wh = {}, wg = {};
+      for (const it of w) tally(it, wh, wg);
+      for (const t of list) {
+        if (!wg[t]) { runA[t] = 0; runH[t] = 0; continue; }
+        const home = wh[t] || 0;
+        runA[t] = home === 0 ? (runA[t] || 0) + 1 : 0;
+        runH[t] = home === wg[t] ? (runH[t] || 0) + 1 : 0;
+        if (runA[t] > MAX_AWAY) c += 100;
+        if (runH[t] > MAX_HOME) c += 100;
+        if (runA[t] === MAX_AWAY || runH[t] === MAX_AWAY) c += 2; // allowed, but a mix is better
+      }
     }
-    if (!moved && cur >= 100) for (const k of shuffle(keys, r).slice(0, 2)) pick.set(k, !pick.get(k)), cur = cost();
+    return c + lastCost();
+  };
+  let best = null;
+  for (let attempt = 0; attempt < 40 && !(best && best.c < 100); attempt++) {
+    const legOrder = legs.map(w => shuffle(w, r));
+    for (const k of keys) pick.set(k, r() < 0.5);
+    const order = () => legOrder.flat();
+    let cur = cost(order());
+    for (let pass = 0; pass < 40; pass++) {
+      let moved = false;
+      // Flip a host, or swap two weekends in a leg.
+      for (const k of shuffle(keys, r)) {
+        pick.set(k, !pick.get(k));
+        const c = cost(order());
+        if (c < cur) { cur = c; moved = true; } else pick.set(k, !pick.get(k));
+      }
+      for (const lo of legOrder) for (let i = 0; i < lo.length; i++) {
+        const j = Math.floor(r() * lo.length);
+        if (i === j) continue;
+        [lo[i], lo[j]] = [lo[j], lo[i]];
+        const c = cost(order());
+        if (c < cur) { cur = c; moved = true; } else [lo[i], lo[j]] = [lo[j], lo[i]];
+      }
+      if (!moved || cur < 3) break;
+    }
+    if (!best || cur < best.c) best = { c: cur, pick: new Map(pick), legOrder: legOrder.map(w => [...w]) };
   }
-  if (cur >= 100) return null;
+  if (!best || best.c >= 1000) return null;
+  for (const [k, v] of best.pick) pick.set(k, v);
   // Games: a meeting's visitors play each host once, swapping on day two;
   // partners play on the weekend's second day.
   const play = it => {
@@ -196,11 +237,12 @@ export function partnerRounds(list, partners, target, r, prefer = () => 0) {
     if (host.length === 2 && away.length === 2) {
       const [h1, h2] = r() < 0.5 ? host : [host[1], host[0]];
       d1.push([h1, away[0]], [h2, away[1]]); d2.push([h2, away[0]], [h1, away[1]]);
-    } else if (away.length === 1) { const h = r() < 0.5 ? host : [host[1], host[0]]; d1.push([h[0], away[0]]); d2.push([h[1], away[0]]); }
+    } else if (host.length === 1 && away.length === 1) (r() < 0.5 ? d1 : d2).push([host[0], away[0]]);
+    else if (away.length === 1) { const h = r() < 0.5 ? host : [host[1], host[0]]; d1.push([h[0], away[0]]); d2.push([h[1], away[0]]); }
     else { const a = r() < 0.5 ? away : [away[1], away[0]]; d1.push([host[0], a[0]]); d2.push([host[0], a[1]]); }
     return [d1, d2];
   };
-  const rounds = legs.flatMap(weekends => shuffle(weekends, r).flatMap(w => { const g = w.map(play); return [g.flatMap(x => x[0]), g.flatMap(x => x[1])]; }));
+  const rounds = best.legOrder.flat().flatMap(w => { const g = w.map(play); return [g.flatMap(x => x[0]), g.flatMap(x => x[1])]; });
   const cnt = Object.fromEntries(list.map(t => [t, 0]));
   for (const round of rounds) for (const [a, b] of round) { cnt[a]++; cnt[b]++; }
   if (list.some(t => cnt[t] !== target)) return null;

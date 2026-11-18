@@ -82,6 +82,20 @@ owner asks.
   shared; put differences in data or settings.
 - Ratings come from the real 2025-26 season with the formula in `js/data.js`;
   coaches are the real 2026 head coaches. Say where data came from there.
+- Travel partners (`js/partners.js`, the owner's ask, Nov. 2026): in a
+  conference of four or more, nearby schools travel as a pair (picked by
+  distance, `autoPartners`; the commissioner can re-pair them or turn them
+  off in Standings → Commissioner: `settings.partners[conf]`,
+  `settings.partnersOff[conf]`). A pair visits a pair for a weekend: each
+  visitor plays one host on the first day and the other on the second.
+  Partners meet on their pair's open weekend (or a rivalry weekend); an odd
+  school out has no partner and plays both schools of a pair in a weekend.
+  `partnerRounds` builds everyone-once, everyone-twice or in between (second
+  meetings left out by whole weekends where it can), with hosts chosen so
+  each team is home for half (one off at most when meetings aren't all
+  doubled); when it can't (an 8-team single round robin, for one), the
+  conference gets the plain round robin. `season.partnerConfs` lists the
+  conferences scheduled in pairs.
 - Regionals avoid first-round matchups between conference rivals
   (`avoidConferenceMatchups` in `js/postseason.js`, the owner's rule): after
   the serpentine, teams on one seed line trade regionals (lowest lines

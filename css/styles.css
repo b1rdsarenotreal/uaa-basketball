@@ -1222,3 +1222,9 @@ button.bx-sg:hover { border-color: var(--muted); }
 .rl-conf { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
 .rl-move { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .rl-confs { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Travel partners (Standings → Commissioner) */
+.tp-box { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 6px; }
+.tp-pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px 14px; }
+.tp-pair { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tp-pair select { max-width: 170px; }

@@ -25,9 +25,10 @@
 // When `prev` (last season) is given, conference opponents who met once last
 // year swap home and away.
 
-import { isIndependent } from './standings.js?v=20261117010420';
-import { cityPoint, miles } from './geo.js?v=20261117010420';
-import { rng, shuffle, hashStr } from './util.js?v=20261117010420';
+import { isIndependent } from './standings.js?v=20261117172925';
+import { cityPoint, miles } from './geo.js?v=20261117172925';
+import { rng, shuffle, hashStr } from './util.js?v=20261117172925';
+import { partnersOf, partnerRounds } from './partners.js?v=20261117172925';
 
 export const DEFAULT_REG_WEEKS = 18;
 export const DEFAULT_TOURNEY_WEEKS = 0; // kept for older code paths
@@ -392,6 +393,7 @@ export function generateSchedule(season, seed = hashStr(String(season.year)), pr
   };
 
   // ---- conference play ----
+  season.partnerConfs = []; // conferences scheduled with travel partners this time
   const byConf = {};
   for (const n of names) if (!isIndependent(teams[n].conference)) (byConf[teams[n].conference] ||= []).push(n);
   const window = [];
@@ -404,6 +406,22 @@ export function generateSchedule(season, seed = hashStr(String(season.year)), pr
     if (list.length < 2) continue;
     const prefer = (a, b) => { const h = hosts.get(key(a, b)); return !h || h === 'both' ? 0 : h === a ? -1 : 1; };
     const maxRounds = window.length * PER_WEEK + PER_WEEK;
+    // Travel partners: whole weekends (two games, a pair visiting a pair) in
+    // weeks that have both conference days; early December takes one more
+    // weekend if needed.
+    const T = confTarget(list.length, st.confMatches ?? DEFAULT_CONF_MATCHES);
+    const pr = partnerRounds(list, partnersOf(season, conf, list), T, r, prefer);
+    if (pr && pr.length / PER_WEEK <= window.length + 1) {
+      season.partnerConfs = [...(season.partnerConfs || []), conf];
+      const weeks = window.slice(-Math.min(window.length, pr.length / PER_WEEK));
+      if (pr.length / PER_WEEK > window.length) weeks.unshift(EARLY_CONF_WEEK);
+      const days = seriesDays(confDaysOf(season, conf));
+      pr.forEach((pairs, i) => {
+        const week = weeks[Math.floor(i / PER_WEEK)], slot = i % PER_WEEK;
+        for (const [a, b] of pairs) { add(week, days[slot].day, a, b, { confGame: true, slot }); confGames[a]++; confGames[b]++; }
+      });
+      continue;
+    }
     const rounds = confRounds(list, maxRounds, r, st.confMatches ?? DEFAULT_CONF_MATCHES, prefer);
     while (rounds.length && !rounds[rounds.length - 1].length) rounds.pop();
     // Slots: [week, slot] in order. Early December takes what doesn't fit.

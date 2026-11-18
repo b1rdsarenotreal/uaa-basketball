@@ -1,15 +1,16 @@
 // Season pages: home, schedule, standings, rankings and postseason.
 
-import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117010420';
-import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117010420';
-import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117010420';
-import { ovr } from './sim.js?v=20261117010420';
-import { simGames, addGame, weekName } from './league.js?v=20261117010420';
-import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117010420';
-import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117010420';
-import { fmtPct, hashStr } from './util.js?v=20261117010420';
-import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117010420';
-import { regionSitesFor, siteOrder } from './regions.js?v=20261117010420';
+import { ctx, S, app, modal, $, $$, esc, toast, changed, persist, cache, team, teamOptions, teamNames, confLogo, confHref, confColor, confInfo, gameCard, compactCard, placeholderCard, bindGameCards, openGame, resultText, periodNote, DAY_NAMES, readableOn, teamInfo, logoImg, teamHref, seasonLabel } from './ui.js?v=20261117172925';
+import { partnersOf } from './partners.js?v=20261117172925';
+import { isFinal, winnerOf, resultFor, records, rpi, rating, indexName, usesNet, NET_DIALS, confStandings, conferences, regSeasonChamp, regSeasonChamps, TIEBREAKERS, quadrants, quadCuts, isIndependent, INDEPENDENT } from './standings.js?v=20261117172925';
+import { latestPoll, generatePoll, pollRankMap, pollSizeOf, VOTER_PANEL, voterStyle, votersOf, addRandomVoter, removeVoter } from './polls.js?v=20261117172925';
+import { ovr } from './sim.js?v=20261117172925';
+import { simGames, addGame, weekName } from './league.js?v=20261117172925';
+import { confClashes, CONF_FORMATS, confFormatName, confKind } from './postseason.js?v=20261117172925';
+import { COMMITTEE_TIERS, gameVenue, COMMITTEE_SHORT, committeeSheet, compareTeams, mcwsVenue, postWeeks, regWeeksOf, ncaaConfig, hasSupers, noRegionals, fieldSize, wsTeams, formatSummary, shownSeed, postseasonBonus, defaultConfTourneySize, confTourneySeeds, reseedConfTourney, proposeField, lockField, pods, nodeTeams, nodeNeeded, runnerUp, committeeOrder, autoBids, refLabel, setConfFormat, ensureLayout, confHost, setConfHost, mcwsHistory, selectionBoard, setAtLarge, confirmField, unconfirmField, bracketology, BRACKETOLOGY_FROM_WEEK, firstRoundPairs } from './postseason.js?v=20261117172925';
+import { fmtPct, hashStr } from './util.js?v=20261117172925';
+import { DAY_ORDER, CONF_WEEKENDS, applyConfWeekend } from './schedule.js?v=20261117172925';
+import { regionSitesFor, siteOrder } from './regions.js?v=20261117172925';
 
 // " at Pauley Pavilion, Los Angeles, Calif." for a host school with an arena.
 const atField = (s, school) => { const t = s.teams[school]; const f = [t?.stadium, t?.city].filter(Boolean).join(', '); return f ? ` at ${esc(f)}` : ''; };
@@ -228,6 +229,44 @@ function confHead(c, sub = '', extra = '', attrs = '', logo = 48) {
   return `<div class="conf-head" ${attrs}><a class="conf-tile" href="${confHref(c)}">${confLogo(c, logo)}</a><div class="conf-name"><h2><a href="${confHref(c)}">${esc(c)}</a></h2>${sub ? `<span>${sub}</span>` : ''}</div><span class="spacer"></span>${extra}</div>`;
 }
 
+// Travel partners (the owner's ask, Nov. 2026): who travels with whom on
+// conference weekends, picked by distance unless the commissioner changes
+// them here. Used whenever the schedule is built (next season, or Settings
+// → Rebuild).
+function partnerBlock(s, c, list) {
+  if (list.length < 4) return '';
+  const p = partnersOf(s, c, list), off = !p, custom = !!s.settings.partners?.[c]?.length;
+  const opts = (a, b) => list.filter(t => t !== a).map(t => `<option value="${esc(t)}" ${t === b ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  return `<div class="tp-box"><label class="check"><input type="checkbox" data-tpon="${esc(c)}" ${off ? '' : 'checked'}> <b>Travel partners</b> <span class="muted">a pair visits a pair for the weekend, two games each</span></label>
+    ${off ? '' : `<div class="tp-pairs">${p.pairs.map(([a, b]) => `<div class="tp-pair">${team(a, { size: 18, rank: false })}<span class="muted">with</span><select data-tp="${esc(c)}" data-tpa="${esc(a)}">${opts(a, b)}</select></div>`).join('')}
+      ${p.solo ? `<div class="tp-pair">${team(p.solo, { size: 18, rank: false })}<span class="muted">no partner</span></div>` : ''}</div>
+      ${s.partnerConfs && !s.partnerConfs.includes(c) ? `<div class="hint small">This season's schedule couldn't be built around these pairs (the conference's size and game count don't fit pair weekends with home and away even), so it plays a regular round robin.</div>` : ''}
+      <div class="muted">${custom ? 'Set by hand. ' : 'Closest schools paired. '}Changes apply when a schedule is built: next season, or Settings → Rebuild.${custom ? ` <button type="button" class="btn sm ghost" data-tpreset="${esc(c)}">Pair by distance</button>` : ''}</div>`}</div>`;
+}
+function bindPartners(s) {
+  $$('[data-tpon]').forEach(b => (b.onchange = () => {
+    s.settings.partnersOff ||= {};
+    if (b.checked) delete s.settings.partnersOff[b.dataset.tpon]; else s.settings.partnersOff[b.dataset.tpon] = true;
+    changed({ progress: false });
+  }));
+  $$('[data-tp]').forEach(sel => (sel.onchange = () => {
+    const c = sel.dataset.tp, a = sel.dataset.tpa, x = sel.value;
+    const list = Object.keys(s.teams).filter(t => s.teams[t].conference === c);
+    const p = partnersOf(s, c, list), pairs = p.pairs.map(q => [...q]);
+    const mine = pairs.find(q => q.includes(a)), b = mine.find(t => t !== a), theirs = pairs.find(q => q.includes(x));
+    // a and x become partners; their old partners pair up (or b is left
+    // without one when x had none).
+    const y = theirs ? theirs.find(t => t !== x) : null;
+    const next = pairs.filter(q => q !== mine && q !== theirs);
+    next.push([a, x]);
+    if (y) next.push([b, y]);
+    s.settings.partners ||= {}; s.settings.partners[c] = next;
+    changed({ progress: false });
+    toast(`${c}: ${a} and ${x} now travel together.`);
+  }));
+  $$('[data-tpreset]').forEach(b => (b.onclick = () => { delete s.settings.partners?.[b.dataset.tpreset]; changed({ progress: false }); }));
+}
+
 export function renderStandings() {
   const s = S(), recs = cache.recs(), r = rating(s);
   const regRecs = records(s, g => g.type === 'regular');
@@ -275,7 +314,7 @@ export function renderStandings() {
         <label class="field">Game days <select data-weekend="${esc(c)}">${CONF_WEEKENDS.map(([k, l]) => `<option value="${k}" ${(s.settings.confWeekend?.[c] || 'tsu') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         <label class="field">Tournament format <select data-format="${esc(c)}" ${canSize ? '' : 'disabled'}>${CONF_FORMATS.map(([k, l]) => `<option value="${k}" ${(s.settings.confFormat?.[c] || 'single') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         <label class="field">Tournament teams <select data-size="${esc(c)}" ${canSize ? '' : 'disabled'}>${[0, ...Array.from({ length: Math.max(0, Math.min(n, 16) - 1) }, (_, i) => i + 2)].map(k => `<option value="${k}" ${k === size ? 'selected' : ''}>${k ? `Top ${k}` : 'No tournament'}</option>`).join('')}</select></label>
-      </div>${canSize ? '' : `<p class="muted">Tournament size and format are locked once the tournaments are set. You can still switch a tournament's format on the Postseason page until its first game.</p>`}</details>
+      </div>${partnerBlock(s, c, st.map(x => x.team))}${canSize ? '' : `<p class="muted">Tournament size and format are locked once the tournaments are set. You can still switch a tournament's format on the Postseason page until its first game.</p>`}</details>
     </section>`;
   };
   // All conferences: a compact card per conference (place, team, conference
@@ -317,6 +356,7 @@ export function renderStandings() {
     changed({ progress: false });
     toast(`${c} conference games: ${CONF_WEEKENDS.find(([k]) => k === sel.value)[1].toLowerCase()}.${n ? ` ${n} unplayed games moved.` : ''}`);
   }));
+  bindPartners(s);
   $$('[data-format]').forEach(sel => (sel.onchange = () => { s.settings.confFormat ||= {}; s.settings.confFormat[sel.dataset.format] = sel.value; changed({ progress: false }); }));
   $$('[data-size]').forEach(sel => (sel.onchange = () => { s.settings.confTourney ||= {}; s.settings.confTourney[sel.dataset.size] = Number(sel.value); changed({ progress: false }); }));
 }
